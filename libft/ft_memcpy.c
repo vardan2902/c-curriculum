@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/08 15:46:33 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/08 15:46:34 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/01/09 15:35:12 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@ void	*ft_memcpy(void *dst, const void *src, size_t n)
 	unsigned char		*dst_ptr;
 	const unsigned char	*src_ptr;
 
+	if (!src && !dst)
+		return (dst);
 	i = -1;
 	dst_ptr = (unsigned char *)dst;
 	src_ptr = (const unsigned char *)src;
