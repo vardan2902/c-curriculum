@@ -5,8 +5,9 @@ INCLUDES	=	-I$(LIBFT_DIR) -I./inc -Imlx
 LINKERS		=	-L$(LIBFT_DIR) -lft -lmlx -lm -framework OpenGL -framework AppKit
 CFLAGS		=	-Wall -Wextra -Werror
 OBJ_DIR		=	obj
-SRCS		=	main.c		formulas.c		complex_utils.c		utils.c		parse_utils.c	ft_atof.c \
-				events.c	keyboard_event_utils.c
+SRCS		=	main.c				formulas.c	complex_utils.c	utils.c					\
+				parse_utils.c		ft_atof.c	events.c		keyboard_event_utils.c	\
+				complex_utils2.c	formulas2.c
 OBJS		=	$(patsubst %.c, $(OBJ_DIR)/%.o, $(SRCS))
 LIBFT		=	libft.a
 

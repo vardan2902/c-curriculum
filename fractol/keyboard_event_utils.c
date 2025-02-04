@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 22:12:32 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:41:55 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/04 18:03:02 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,8 +44,21 @@ void	sub_color(int key, t_env *env)
 		env->color.b = (unsigned char)(env->color.b - 5);
 }
 
-void	change_fractal(int key, t_env *env)
+void	change_fractal(int key, t_env *env, int should_convert_key)
 {
+	if (should_convert_key)
+	{
+		if (key == KEY_5)
+			key = 4;
+		if (key == KEY_6)
+			key = 5;
+		if (key == KEY_7)
+			key = 6;
+		if (key == KEY_8)
+			key = 7;
+		if (key == KEY_9)
+			key = 8;
+	}
 	env->formula_name = key;
 	reset_params(env);
 }

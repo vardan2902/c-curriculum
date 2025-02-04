@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 13:51:58 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:21:14 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/04 22:30:37 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,11 @@ t_complex	c_sqrt(t_complex a);
 t_complex	rev_imaginary(t_complex c);
 t_complex	init_complex(double x, double y);
 t_complex	map_point(t_env *env);
+t_complex	c_mult(t_complex a, t_complex b);
+t_complex	c_div(t_complex a, t_complex b);
+t_complex	c_sub(t_complex a, t_complex b);
+t_complex	c_power(t_complex a, int exp);
+t_complex	c_add(t_complex a, t_complex b);
 int			draw_fractal(t_env *env);
 void		check_args(int argc, char **argv);
 int			get_formula_name(char **argv);
@@ -28,7 +33,7 @@ int			on_key_press(int keycode, t_env *env);
 void		move(t_env *env, int key);
 void		add_color(int key, t_env *env);
 void		sub_color(int key, t_env *env);
-void		change_fractal(int key, t_env *env);
+void		change_fractal(int key, t_env *env, int should_convert_key);
 void		reset_params(t_env *env);
 int			on_mouse_move(int x, int y, t_env *env);
 int			on_scroll(int button, int x, int y, t_env *env);

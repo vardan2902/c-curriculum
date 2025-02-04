@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 23:25:05 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:30:56 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/05 00:01:01 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,19 +23,23 @@ t_complex	map_point(t_env *env)
 
 int	calculate_fractal(t_env *env)
 {
+	t_complex	prev_z;
 	t_complex	z;
 	int			i;
-	int			is_julia;
+	double		epsilon;
 
-	is_julia = env->formula_name == JULIA;
+	epsilon = 1e-6;
 	z = init_complex(0, 0);
-	if (is_julia)
+	if (env->formula_name == JULIA || env->formula_name == NEWTON)
 		z = map_point(env);
 	i = -1;
 	while (c_mod(z) <= 2 && ++i < ITERATIONS)
 	{
+		prev_z = z;
 		z = env->formula[env->formula_name](z, env);
-		if (c_mod(z) >= 2)
+		if (env->formula_name == NEWTON && c_mod(c_sub(z, prev_z)) < epsilon)
+			return (i);
+		if (env->formula_name != NEWTON && c_mod(z) >= 2)
 			return (i);
 	}
 	return (0);
@@ -57,7 +61,8 @@ int	draw_fractal(t_env *env)
 {
 	int	res;
 
-	mlx_clear_window(env->mlx.mlx, env->mlx.win);
+	if (!env->update_needed)
+		return (0);
 	env->x = -1;
 	while (++(env->x) < WIN_SIZE)
 	{
@@ -69,14 +74,6 @@ int	draw_fractal(t_env *env)
 		}
 	}
 	mlx_put_image_to_window(env->mlx.mlx, env->mlx.win, env->data.img, 0, 0);
+	env->update_needed = 0;
 	return (0);
-}
-
-t_complex	init_complex(double x, double y)
-{
-	t_complex	z;
-
-	z.x = x;
-	z.y = y;
-	return (z);
 }

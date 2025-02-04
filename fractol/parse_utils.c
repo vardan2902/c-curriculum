@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 20:17:35 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:45:06 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/04 22:40:43 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,9 @@ static void	to_lower(char *s)
 
 static void	print_usage_exit(char *name)
 {
-	ft_printf("%s:\tInvalid Arguments\n\t\tArguments:\n\t\t\tjulia [x] [y]\n\
-\t\t\tmandelbrot\n\t\t\ttricorn\n\t\t\tbuffalo\n", name);
+	ft_printf(ANSI_BRIGHT_RED"%s:\tInvalid Arguments\n"ANSI_RESET, name);
+	ft_printf(ANSI_BRIGHT_CYAN"Usage:\t\tjulia [x] [y]\n\t\tmandelbrot\n"\
+			ANSI_RESET);
 	exit(1);
 }
 
@@ -55,8 +56,7 @@ void	check_args(int argc, char **argv)
 	if (argc == 1 || argc > 4)
 		print_usage_exit(argv[0]);
 	to_lower(argv[1]);
-	if (ft_strcmp(argv[1], "julia") && ft_strcmp(argv[1], "mandelbrot") && \
-			ft_strcmp(argv[1], "buffalo") && ft_strcmp(argv[1], "tricorn"))
+	if (ft_strcmp(argv[1], "julia") && ft_strcmp(argv[1], "mandelbrot"))
 		print_usage_exit(argv[0]);
 	if (argc > 2)
 	{
@@ -73,10 +73,6 @@ int	get_formula_name(char **argv)
 		return (JULIA);
 	if (!ft_strcmp(argv[1], "mandelbrot"))
 		return (MANDELBROT);
-	if (!ft_strcmp(argv[1], "buffalo"))
-		return (BUFFALO);
-	if (!ft_strcmp(argv[1], "tricorn"))
-		return (TRICORN);
 	print_usage_exit(argv[0]);
 	return (0);
 }

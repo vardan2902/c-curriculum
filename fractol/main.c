@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 14:04:25 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:42:46 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/04 22:31:30 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,25 @@
 
 void	reset_params(t_env *env)
 {
-	env->color.r = 0;
-	env->color.g = 4;
-	env->color.b = 3;
+	env->color.r = 5;
+	env->color.g = 0;
+	env->color.b = 0;
 	env->r = 2;
 	env->off_x = 0;
 	env->off_y = 0;
+}
+
+void	init_formulas(t_env *env)
+{
+	env->formula[JULIA] = julia;
+	env->formula[MANDELBROT] = mandelbrot;
+	env->formula[BUFFALO] = buffalo;
+	env->formula[TRICORN] = tricorn;
+	env->formula[NEWTON] = newton;
+	env->formula[BURNING_SHIP] = burning_ship;
+	env->formula[CELTIC_MANDELBROT] = celtic_mandelbrot;
+	env->formula[PERPENDICULAR_BUFFALO] = perpendicular_buffalo;
+	env->formula[CUBIC_MANDELBROT] = cubic_mandelbrot;
 }
 
 t_env	init_env(int argc, char **argv)
@@ -31,7 +44,7 @@ t_env	init_env(int argc, char **argv)
 	x = 0.284;
 	y = -0.120;
 	env.mlx.mlx = mlx_init();
-	env.scrolling = 0;
+	env.update_needed = 1;
 	env.mlx.win = mlx_new_window(env.mlx.mlx, WIN_SIZE, WIN_SIZE, "fractol");
 	env.data.img = mlx_new_image(env.mlx.mlx, WIN_SIZE, WIN_SIZE);
 	env.data.addr = mlx_get_data_addr(env.data.img, &env.data.bits_per_pixel,
@@ -43,10 +56,7 @@ t_env	init_env(int argc, char **argv)
 	if (argc > 3)
 		y = ft_atof(argv[3]);
 	env.c = init_complex(x, y);
-	env.formula[JULIA] = julia;
-	env.formula[MANDELBROT] = mandelbrot;
-	env.formula[BUFFALO] = buffalo;
-	env.formula[TRICORN] = tricorn;
+	init_formulas(&env);
 	reset_params(&env);
 	return (env);
 }

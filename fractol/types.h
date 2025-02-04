@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/26 23:28:18 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 23:28:43 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/04 18:10:15 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ typedef struct s_color
 
 typedef struct s_env
 {
-	int					scrolling;
+	int					update_needed;
 	t_formula			formula_name;
 	t_complex			c;
 	t_data				data;
@@ -55,7 +55,7 @@ typedef struct s_env
 	int					y;
 	double				off_x;
 	double				off_y;
-	t_complex			(*formula[4])(t_complex, struct s_env *);
+	t_complex			(*formula[9])(t_complex, struct s_env *);
 }	t_env;
 
 #endif
