@@ -47,6 +47,7 @@ static t_philo	*init_philo(int num, t_general_info *info, t_philos_and_forks *pf
 	philo->info = info;
 	philo->pf = pf;
 	philo->eating = 0;
+	philo->eat_count = 0;
 	philo->last_eat = &info->start_time;
 	if (gettimeofday(philo->last_eat, NULL))
 		return (free(philo), NULL);
