@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 16:16:40 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 20:24:52 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/14 22:20:51 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define PHILO_H
 
 # include <pthread.h>
+# include <semaphore.h>
 # include <stdlib.h>
 # include <stdio.h>
 # include <string.h>
@@ -28,25 +29,28 @@
 # define RED "\e[0;31m"
 # define RESET "\e[0m"
 
+# define FORKS_SEM "/forks"
+# define EAT_COUNT_SEM "/eat_count"
+# define DIED_SEM "/philo_died"
+
 typedef struct timeval	t_timeval;
 
 typedef struct s_general_info
 {
-	pthread_mutex_t		eat_count_mutex;
-	t_timeval			start_time;
-	int					number_of_philos;
-	int					time_to_die;
-	int					time_to_eat;
-	int					time_to_sleep;
-	int					must_eat;
-	int					total_ate;
-	int					finished;
+	sem_t		*eat_count_sem;
+	sem_t		*died_sem;
+	t_timeval	start_time;
+	int			number_of_philos;
+	int			time_to_die;
+	int			time_to_eat;
+	int			time_to_sleep;
+	int			must_eat;
 }	t_info;
 
 typedef struct s_philos_and_forks
 {
-	pthread_t		*philos;
-	pthread_mutex_t	*forks;
+	pid_t	*philos;
+	sem_t	*forks;
 }	t_pf;
 
 typedef struct s_philo
@@ -65,10 +69,10 @@ void	print_thinking(int ms, t_philo *philo);
 void	print_died(int ms, t_philo *philo);
 void	print_usage(char *name);
 int		parse_args(int argc, char *argv[], t_info *info);
-void	wait_ms(int ms, t_info *info);
+void	wait_ms(int ms);
 int		get_ms_from_start(t_timeval tv);
 int		get_current_ms(void);
 int		get_ms(t_timeval *tv);
-void	*philo_routine(void *args);
+void	*start_philo_life(t_philo *args);
 
 #endif

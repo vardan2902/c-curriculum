@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 17:35:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 20:24:37 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/14 22:05:05 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,19 +46,18 @@ int	parse_args(int argc, char *argv[], t_info *info)
 	info->time_to_die = philo_atoi(argv[2]);
 	info->time_to_eat = philo_atoi(argv[3]);
 	info->time_to_sleep = philo_atoi(argv[4]);
-	if (info->number_of_philos <= 0 || info->time_to_die == -1
-		|| info->time_to_eat == -1 || info->time_to_sleep == -1)
+	if (info->number_of_philos <= 0 || info->time_to_die <= 0
+		|| info->time_to_eat <= 0 || info->time_to_sleep <= 0)
 		return (print_usage(argv[0]), 0);
 	if (argc == 6)
 	{
 		info->must_eat = philo_atoi(argv[5]);
-		if (info->must_eat == -1)
+		if (info->must_eat <= 0)
 			return (print_usage(argv[0]), 0);
 	}
-	info->finished = 0;
-	if (pthread_mutex_init(&info->eat_count_mutex, NULL))
-		return (0);
-	if (gettimeofday(&info->start_time, NULL) == -1)
+	info->eat_count_sem = sem_open(EAT_COUNT_SEM, O_CREAT, 0644, 0);
+	if (info->eat_count_sem == SEM_FAILED
+		|| gettimeofday(&info->start_time, NULL) == -1)
 		return (0);
 	return (1);
 }

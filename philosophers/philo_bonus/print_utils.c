@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 17:17:57 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 15:38:39 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/14 21:45:59 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,26 +14,22 @@
 
 void	print_fork_taken(int ms, t_philo *philo)
 {
-	if (!philo->info->finished)
-		printf(YELLOW"%d %d has taken a fork\n"RESET, ms, philo->num);
+	printf(YELLOW"%d %d has taken a fork\n"RESET, ms, philo->num);
 }
 
 void	print_eating(int ms, t_philo *philo)
 {
-	if (!philo->info->finished)
-		printf(CYAN"%d %d is eating\n"RESET, ms, philo->num);
+	printf(CYAN"%d %d is eating\n"RESET, ms, philo->num);
 }
 
 void	print_sleeping(int ms, t_philo *philo)
 {
-	if (!philo->info->finished)
-		printf(GREEN"%d %d is sleeping\n"RESET, ms, philo->num);
+	printf(GREEN"%d %d is sleeping\n"RESET, ms, philo->num);
 }
 
 void	print_thinking(int ms, t_philo *philo)
 {
-	if (!philo->info->finished)
-		printf(HGREEN"%d %d is thinking\n"RESET, ms, philo->num);
+	printf(HGREEN"%d %d is thinking\n"RESET, ms, philo->num);
 }
 
 void	print_died(int ms, t_philo *philo)

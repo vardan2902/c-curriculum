@@ -1,4 +1,4 @@
-NAME			=	philo
+NAME			=	philo_bonus
 CC				=	cc
 CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address
 SRCS			=	main.c philo.c parse.c print_utils.c error_utils.c \

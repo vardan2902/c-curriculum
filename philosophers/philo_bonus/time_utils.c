@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/12 15:59:26 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 19:48:32 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/14 21:56:13 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ int	get_ms(t_timeval *tv)
 	return (tv->tv_sec * 1000 + tv->tv_usec / 1000);
 }
 
-void	wait_ms(int ms, t_info *info)
+void	wait_ms(int ms)
 {
 	t_timeval	current_tv;
 	long int	start_ms;
@@ -28,7 +28,7 @@ void	wait_ms(int ms, t_info *info)
 	start_ms = get_ms(&current_tv);
 	while (1)
 	{
-		if (info->finished || gettimeofday(&current_tv, NULL) == -1)
+		if (gettimeofday(&current_tv, NULL) == -1)
 			return ;
 		current_ms = get_ms(&current_tv);
 		if (start_ms + ms <= current_ms)
