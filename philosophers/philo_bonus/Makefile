@@ -2,7 +2,7 @@ NAME			=	philo_bonus
 CC				=	cc
 CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address
 SRCS			=	main.c philo.c parse.c print_utils.c error_utils.c \
-					time_utils.c
+					time_utils.c pctrl_utils.c
 OBJS_DIR		=	obj
 OBJS			=	$(patsubst %.c, $(OBJS_DIR)/%.o, $(SRCS))
 LINKER_FLAGS	=	-pthread

@@ -55,9 +55,11 @@ int	parse_args(int argc, char *argv[], t_info *info)
 		if (info->must_eat <= 0)
 			return (print_usage(argv[0]), 0);
 	}
+	sem_unlink(EAT_COUNT_SEM);
+	sem_unlink(DIED_SEM);
 	info->eat_count_sem = sem_open(EAT_COUNT_SEM, O_CREAT, 0644, 0);
-	if (info->eat_count_sem == SEM_FAILED
-		|| gettimeofday(&info->start_time, NULL) == -1)
+	info->died_sem = sem_open(DIED_SEM, O_CREAT, 0644, 0);
+	if (info->eat_count_sem == SEM_FAILED || info->died_sem == SEM_FAILED)
 		return (0);
 	return (1);
 }

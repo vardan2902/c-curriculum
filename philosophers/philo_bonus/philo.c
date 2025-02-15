@@ -14,45 +14,57 @@
 
 static void	p_think(t_philo *philo)
 {
-	print_thinking(get_ms_from_start(philo->info->start_time), philo);
+	print_thinking(philo);
 }
 
-static void	p_eat(t_philo *philo, t_timeval *tv)
+static void	p_eat(t_philo *philo)
 {
-	sem_wait(philo->pf->forks);
-	print_fork_taken(get_ms_from_start(philo->info->start_time), philo);
-	sem_wait(philo->pf->forks);
-	print_fork_taken(get_ms_from_start(philo->info->start_time), philo);
-	print_eating(get_ms_from_start(philo->info->start_time), philo);
-	gettimeofday(tv, NULL);
-	philo->last_eat = tv;
+	sem_wait(philo->info->forks);
+	print_fork_taken(philo);
+	sem_wait(philo->info->forks);
+	print_fork_taken(philo);
+	print_eating(philo);
+	gettimeofday(&philo->last_eat, NULL);
 	wait_ms(philo->info->time_to_eat);
-	sem_post(philo->pf->forks);
-	sem_post(philo->pf->forks);
 	++philo->eat_count;
 	if (philo->eat_count == philo->info->must_eat)
 		sem_post(philo->info->eat_count_sem);
+	sem_post(philo->info->forks);
+	sem_post(philo->info->forks);
 }
 
 static void	p_sleep(t_philo *philo)
 {
-	print_sleeping(get_ms_from_start(philo->info->start_time), philo);
+	print_sleeping(philo);
 	wait_ms(philo->info->time_to_sleep);
+}
+
+static void	*died_check(void *args)
+{
+	t_philo	*philo;
+	
+	philo = (t_philo *)args;
+	while ((get_current_ms() - get_ms(&philo->last_eat)) < philo->info->time_to_die)
+		usleep(5000);
+	sem_post(philo->info->died_sem);
+	print_died(philo);
+	return (NULL);
 }
 
 void	*start_philo_life(t_philo *philo)
 {
-	t_timeval		tv;
+	pthread_t		died_check_thread;
 
+	if (pthread_create(&died_check_thread, NULL, &died_check, philo)
+		|| pthread_detach(died_check_thread))
+		return (NULL);
 	if (philo->num % 2 == 0)
-		wait_ms(1);
-	while (philo)
+		wait_ms(60);
+	while (1)
 	{
 		p_think(philo);
-		p_eat(philo, &tv);
+		p_eat(philo);
 		p_sleep(philo);
 	}
-	sem_close(philo->pf->forks);
-	sem_close(philo->info->eat_count_sem);
 	return (NULL);
 }

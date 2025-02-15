@@ -21,6 +21,7 @@
 # include <unistd.h>
 # include <sys/time.h>
 # include <limits.h>
+# include <signal.h>
 
 # define YELLOW "\e[0;33m"
 # define CYAN "\e[0;36m"
@@ -29,14 +30,17 @@
 # define RED "\e[0;31m"
 # define RESET "\e[0m"
 
-# define FORKS_SEM "/forks"
-# define EAT_COUNT_SEM "/eat_count"
-# define DIED_SEM "/philo_died"
+# define FORKS_SEM "/philo/forks_sem"
+# define EAT_COUNT_SEM "/philo/eat_count_sem"
+# define DIED_SEM "/philo/died_sem"
+# define PRINT_SEM "/philo/print_sem"
 
 typedef struct timeval	t_timeval;
 
 typedef struct s_general_info
 {
+	pid_t		*philos;
+	sem_t		*forks;
 	sem_t		*eat_count_sem;
 	sem_t		*died_sem;
 	t_timeval	start_time;
@@ -47,26 +51,19 @@ typedef struct s_general_info
 	int			must_eat;
 }	t_info;
 
-typedef struct s_philos_and_forks
-{
-	pid_t	*philos;
-	sem_t	*forks;
-}	t_pf;
-
 typedef struct s_philo
 {
-	t_timeval	*last_eat;
-	t_pf		*pf;
 	t_info		*info;
+	t_timeval	last_eat;
 	int			num;
 	int			eat_count;
 }	t_philo;
 
-void	print_fork_taken(int ms, t_philo *philo);
-void	print_eating(int ms, t_philo *philo);
-void	print_sleeping(int ms, t_philo *philo);
-void	print_thinking(int ms, t_philo *philo);
-void	print_died(int ms, t_philo *philo);
+void	print_fork_taken(t_philo *philo);
+void	print_eating(t_philo *philo);
+void	print_sleeping(t_philo *philo);
+void	print_thinking(t_philo *philo);
+void	print_died(t_philo *philo);
 void	print_usage(char *name);
 int		parse_args(int argc, char *argv[], t_info *info);
 void	wait_ms(int ms);
@@ -74,5 +71,6 @@ int		get_ms_from_start(t_timeval tv);
 int		get_current_ms(void);
 int		get_ms(t_timeval *tv);
 void	*start_philo_life(t_philo *args);
+void	pkill_all_ctrl(t_info *info);
 
 #endif
