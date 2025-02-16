@@ -37,26 +37,29 @@ static int	philo_atoi(const char *str)
 	return (num);
 }
 
-int	parse_args(int argc, char *argv[], t_info *info)
+void	init_arg_info(int argc, char *argv[], t_info *info)
 {
-	if (argc < 5 || argc > 6)
-		return (print_usage(argv[0]), 0);
-	info->must_eat = -1;
 	info->number_of_philos = philo_atoi(argv[1]);
 	info->time_to_die = philo_atoi(argv[2]);
 	info->time_to_eat = philo_atoi(argv[3]);
 	info->time_to_sleep = philo_atoi(argv[4]);
-	if (info->number_of_philos <= 0 || info->time_to_die == -1
-		|| info->time_to_eat == -1 || info->time_to_sleep == -1)
-		return (print_usage(argv[0]), 0);
+	info->must_eat = -1;
 	if (argc == 6)
-	{
 		info->must_eat = philo_atoi(argv[5]);
-		if (info->must_eat == -1)
-			return (print_usage(argv[0]), 0);
-	}
+}
+
+int	parse_args(int argc, char *argv[], t_info *info)
+{
+	if (argc < 5 || argc > 6)
+		return (print_usage(argv[0]), 0);
+	init_arg_info(argc, argv, info);
+	if (info->number_of_philos <= 0 || info->time_to_die <= 50
+		|| info->time_to_eat <= 50 || info->time_to_sleep <= 50
+		|| (argc == 6 && info->must_eat == -1))
+		return (print_usage(argv[0]), 0);
 	info->finished = 0;
-	if (pthread_mutex_init(&info->eat_count_mutex, NULL))
+	if (pthread_mutex_init(&info->eat_count_mutex, NULL)
+		|| pthread_mutex_init(&info->print_mutex, NULL))
 		return (0);
 	if (gettimeofday(&info->start_time, NULL) == -1)
 		return (0);

@@ -34,6 +34,7 @@ static void	clean_up(t_info *info, t_pf *pf, t_philo **philos)
 		free(philos);
 	}
 	pthread_mutex_destroy(&info->eat_count_mutex);
+	pthread_mutex_destroy(&info->print_mutex);
 }
 
 static t_philo	*init_philo(int num, t_info *info, t_pf *pf)
@@ -101,14 +102,15 @@ static void	*finish_control(void *args)
 		{
 			if (get_ms(philos[i]->last_eat) < (get_current_ms() - \
 					info->time_to_die))
-				return (info->finished = 1, print_died(get_ms_from_start(
-							philos[i]->info->start_time), philos[i]), NULL);
+				return (print_state("died", philos[i]), NULL);
 		}
 		usleep(100);
 	}
 	return (NULL);
 }
 
+// NOTE: We should sleep some time before cleaning up
+// to give threads enough time to finish execution
 int	main(int argc, char *argv[])
 {
 	t_info		info;
@@ -123,7 +125,7 @@ int	main(int argc, char *argv[])
 		return (clean_up(&info, &pf, NULL), 0);
 	if (!pthread_create(&finish_check_thread, NULL, &finish_control, philos))
 		pthread_join(finish_check_thread, NULL);
-	usleep(2000);
+	usleep(5000);
 	clean_up(&info, &pf, philos);
 	return (0);
 }

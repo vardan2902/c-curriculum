@@ -23,17 +23,12 @@
 # include <limits.h>
 # include <signal.h>
 
-# define YELLOW "\e[0;33m"
-# define CYAN "\e[0;36m"
-# define GREEN "\e[0;32m"
-# define HGREEN "\e[0;92m"
-# define RED "\e[0;31m"
-# define RESET "\e[0m"
-
 # define FORKS_SEM "/philo/forks_sem"
 # define EAT_COUNT_SEM "/philo/eat_count_sem"
 # define DIED_SEM "/philo/died_sem"
 # define PRINT_SEM "/philo/print_sem"
+# define FINISH_SEM "/philo/finish_sem"
+# define FORK_GUARD_SEM "/philo/fork_guard_sem"
 
 typedef struct timeval	t_timeval;
 
@@ -43,6 +38,9 @@ typedef struct s_general_info
 	sem_t		*forks;
 	sem_t		*eat_count_sem;
 	sem_t		*died_sem;
+	sem_t		*print_sem;
+	sem_t		*finish_sem;
+	sem_t		*fork_guard_sem;
 	t_timeval	start_time;
 	int			number_of_philos;
 	int			time_to_die;
@@ -59,11 +57,7 @@ typedef struct s_philo
 	int			eat_count;
 }	t_philo;
 
-void	print_fork_taken(t_philo *philo);
-void	print_eating(t_philo *philo);
-void	print_sleeping(t_philo *philo);
-void	print_thinking(t_philo *philo);
-void	print_died(t_philo *philo);
+void	print_state(const char *state, t_philo *philo);
 void	print_usage(char *name);
 int		parse_args(int argc, char *argv[], t_info *info);
 void	wait_ms(int ms);
@@ -72,5 +66,6 @@ int		get_current_ms(void);
 int		get_ms(t_timeval *tv);
 void	*start_philo_life(t_philo *args);
 void	pkill_all_ctrl(t_info *info);
+void	sem_close_opened(t_info *info);
 
 #endif

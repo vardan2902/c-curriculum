@@ -21,18 +21,12 @@
 # include <sys/time.h>
 # include <limits.h>
 
-# define YELLOW "\e[0;33m"
-# define CYAN "\e[0;36m"
-# define GREEN "\e[0;32m"
-# define HGREEN "\e[0;92m"
-# define RED "\e[0;31m"
-# define RESET "\e[0m"
-
 typedef struct timeval	t_timeval;
 
 typedef struct s_general_info
 {
 	pthread_mutex_t		eat_count_mutex;
+	pthread_mutex_t		print_mutex;
 	t_timeval			start_time;
 	int					number_of_philos;
 	int					time_to_die;
@@ -58,11 +52,7 @@ typedef struct s_philo
 	int			eat_count;
 }	t_philo;
 
-void	print_fork_taken(int ms, t_philo *philo);
-void	print_eating(int ms, t_philo *philo);
-void	print_sleeping(int ms, t_philo *philo);
-void	print_thinking(int ms, t_philo *philo);
-void	print_died(int ms, t_philo *philo);
+void	print_state(const char *state, t_philo *philo);
 void	print_usage(char *name);
 int		parse_args(int argc, char *argv[], t_info *info);
 void	wait_ms(int ms, t_info *info);

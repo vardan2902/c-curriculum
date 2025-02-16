@@ -1,7 +1,7 @@
 NAME			=	philo
 CC				=	cc
 CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address
-SRCS			=	main.c philo.c parse.c print_utils.c error_utils.c \
+SRCS			=	main.c philo.c parse.c print_utils.c \
 					time_utils.c
 OBJS_DIR		=	obj
 OBJS			=	$(patsubst %.c, $(OBJS_DIR)/%.o, $(SRCS))

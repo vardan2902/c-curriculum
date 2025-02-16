@@ -12,32 +12,28 @@
 
 #include "philo.h"
 
-void	print_fork_taken(t_philo *philo)
+void	print_usage(char *name)
 {
-	printf(YELLOW"%d %d has taken a fork"RESET"\n",
-		get_ms_from_start(philo->info->start_time), philo->num);
+	printf("%s:\tusage:\tnumber_of_philosophers time_to_die" \
+" time_to_eat time_to_sleep\n\t\t\t[number_of_times_each_philosopher" \
+"_must_eat]\n", name);
 }
 
-void	print_eating(t_philo *philo)
+static int	ft_strcmp(const char *s1, const char *s2)
 {
-	printf(CYAN"%d %d is eating"RESET"\n",
-		get_ms_from_start(philo->info->start_time), philo->num);
+	unsigned int	i;
+
+	i = 0;
+	while (s1[i] && s2[i] && s1[i] == s2[i])
+		++i;
+	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
-void	print_sleeping(t_philo *philo)
+void	print_state(const char *state, t_philo *philo)
 {
-	printf(GREEN"%d %d is sleeping"RESET"\n",
-		get_ms_from_start(philo->info->start_time), philo->num);
-}
-
-void	print_thinking(t_philo *philo)
-{
-	printf(HGREEN"%d %d is thinking"RESET"\n",
-		get_ms_from_start(philo->info->start_time), philo->num);
-}
-
-void	print_died(t_philo *philo)
-{
-	printf(RED"%d %d died"RESET"\n",
-		get_ms_from_start(philo->info->start_time), philo->num);
+	sem_wait(philo->info->print_sem);
+	printf("%d %d %s\n", get_ms_from_start(philo->info->start_time),
+		philo->num, state);
+	if (ft_strcmp(state, "died"))
+		sem_post(philo->info->print_sem);
 }

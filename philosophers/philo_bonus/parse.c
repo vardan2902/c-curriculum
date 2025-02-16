@@ -57,8 +57,14 @@ int	parse_args(int argc, char *argv[], t_info *info)
 	}
 	sem_unlink(EAT_COUNT_SEM);
 	sem_unlink(DIED_SEM);
+	sem_unlink(PRINT_SEM);
+	sem_unlink(FINISH_SEM);
+	sem_unlink(FORK_GUARD_SEM);
 	info->eat_count_sem = sem_open(EAT_COUNT_SEM, O_CREAT, 0644, 0);
 	info->died_sem = sem_open(DIED_SEM, O_CREAT, 0644, 0);
+	info->print_sem = sem_open(PRINT_SEM, O_CREAT, 0644, 1);
+	info->finish_sem = sem_open(FINISH_SEM, O_CREAT, 0644, 0);
+	info->fork_guard_sem = sem_open(FORK_GUARD_SEM, O_CREAT, 0644, 1);
 	if (info->eat_count_sem == SEM_FAILED || info->died_sem == SEM_FAILED)
 		return (0);
 	return (1);

@@ -12,31 +12,30 @@
 
 #include "philo.h"
 
-void	print_fork_taken(int ms, t_philo *philo)
+void	print_usage(char *name)
 {
-	if (!philo->info->finished)
-		printf(YELLOW"%d %d has taken a fork\n"RESET, ms, philo->num);
+	printf("%s:\tusage:\tnumber_of_philosophers time_to_die" \
+" time_to_eat time_to_sleep\n\t\t\t[number_of_times_each_philosopher" \
+"_must_eat]\n", name);
 }
 
-void	print_eating(int ms, t_philo *philo)
+static int	ft_strcmp(const char *s1, const char *s2)
 {
-	if (!philo->info->finished)
-		printf(CYAN"%d %d is eating\n"RESET, ms, philo->num);
+	unsigned int	i;
+
+	i = 0;
+	while (s1[i] && s2[i] && s1[i] == s2[i])
+		++i;
+	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
-void	print_sleeping(int ms, t_philo *philo)
+void	print_state(const char *state, t_philo *philo)
 {
+	pthread_mutex_lock(&philo->info->print_mutex);
 	if (!philo->info->finished)
-		printf(GREEN"%d %d is sleeping\n"RESET, ms, philo->num);
-}
-
-void	print_thinking(int ms, t_philo *philo)
-{
-	if (!philo->info->finished)
-		printf(HGREEN"%d %d is thinking\n"RESET, ms, philo->num);
-}
-
-void	print_died(int ms, t_philo *philo)
-{
-	printf(RED"%d %d died\n"RESET, ms, philo->num);
+		printf("%d %d %s\n", get_ms_from_start(philo->info->start_time),
+			philo->num, state);
+	if (!ft_strcmp(state, "died"))
+		philo->info->finished = 1;
+	pthread_mutex_unlock(&philo->info->print_mutex);
 }

@@ -14,17 +14,17 @@
 
 static void	p_think(t_philo *philo)
 {
-	print_thinking(get_ms_from_start(philo->info->start_time), philo);
+	print_state("is thinking", philo);
 }
 
 static void	p_eat(t_philo *philo, pthread_mutex_t *l_fork,
 	pthread_mutex_t *r_fork, t_timeval *tv)
 {
 	pthread_mutex_lock(l_fork);
-	print_fork_taken(get_ms_from_start(philo->info->start_time), philo);
+	print_state("has taken a fork", philo);
 	pthread_mutex_lock(r_fork);
-	print_fork_taken(get_ms_from_start(philo->info->start_time), philo);
-	print_eating(get_ms_from_start(philo->info->start_time), philo);
+	print_state("has taken a fork", philo);
+	print_state("is eating", philo);
 	gettimeofday(tv, NULL);
 	philo->last_eat = tv;
 	wait_ms(philo->info->time_to_eat, philo->info);
@@ -41,7 +41,7 @@ static void	p_eat(t_philo *philo, pthread_mutex_t *l_fork,
 
 static void	p_sleep(t_philo *philo)
 {
-	print_sleeping(get_ms_from_start(philo->info->start_time), philo);
+	print_state("is sleeping", philo);
 	wait_ms(philo->info->time_to_sleep, philo->info);
 }
 
