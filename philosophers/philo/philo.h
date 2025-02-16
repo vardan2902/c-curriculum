@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 16:16:40 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 20:24:52 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/16 20:44:28 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,11 +45,12 @@ typedef struct s_philos_and_forks
 
 typedef struct s_philo
 {
-	t_timeval	*last_eat;
-	t_pf		*pf;
-	t_info		*info;
-	int			num;
-	int			eat_count;
+	t_timeval		*last_eat;
+	t_pf			*pf;
+	t_info			*info;
+	int				num;
+	int				eat_count;
+	pthread_mutex_t	died;
 }	t_philo;
 
 void	print_state(const char *state, t_philo *philo);

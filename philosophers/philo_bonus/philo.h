@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 16:16:40 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 22:20:51 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/16 21:33:14 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@
 # define DIED_SEM "/philo/died_sem"
 # define PRINT_SEM "/philo/print_sem"
 # define FINISH_SEM "/philo/finish_sem"
-# define FORK_GUARD_SEM "/philo/fork_guard_sem"
 
 typedef struct timeval	t_timeval;
 
@@ -40,7 +39,6 @@ typedef struct s_general_info
 	sem_t		*died_sem;
 	sem_t		*print_sem;
 	sem_t		*finish_sem;
-	sem_t		*fork_guard_sem;
 	t_timeval	start_time;
 	int			number_of_philos;
 	int			time_to_die;
@@ -67,5 +65,9 @@ int		get_ms(t_timeval *tv);
 void	*start_philo_life(t_philo *args);
 void	pkill_all_ctrl(t_info *info);
 void	sem_close_opened(t_info *info);
+void	clean_up(t_info *info);
+void	alert_finish(t_info *info);
+void	unlink_named_sem(void);
+void	wait_untill_sim_start(t_timeval *tv);
 
 #endif

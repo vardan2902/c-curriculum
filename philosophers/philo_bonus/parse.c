@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 17:35:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 22:05:05 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/16 21:32:43 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,17 +55,13 @@ int	parse_args(int argc, char *argv[], t_info *info)
 		if (info->must_eat <= 0)
 			return (print_usage(argv[0]), 0);
 	}
-	sem_unlink(EAT_COUNT_SEM);
-	sem_unlink(DIED_SEM);
-	sem_unlink(PRINT_SEM);
-	sem_unlink(FINISH_SEM);
-	sem_unlink(FORK_GUARD_SEM);
+	unlink_named_sem();
 	info->eat_count_sem = sem_open(EAT_COUNT_SEM, O_CREAT, 0644, 0);
 	info->died_sem = sem_open(DIED_SEM, O_CREAT, 0644, 0);
 	info->print_sem = sem_open(PRINT_SEM, O_CREAT, 0644, 1);
 	info->finish_sem = sem_open(FINISH_SEM, O_CREAT, 0644, 0);
-	info->fork_guard_sem = sem_open(FORK_GUARD_SEM, O_CREAT, 0644, 1);
-	if (info->eat_count_sem == SEM_FAILED || info->died_sem == SEM_FAILED)
+	if (info->eat_count_sem == SEM_FAILED || info->died_sem == SEM_FAILED
+		|| info->print_sem == SEM_FAILED || info->finish_sem == SEM_FAILED)
 		return (0);
 	return (1);
 }

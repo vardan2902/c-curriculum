@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 17:58:03 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 20:04:00 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/16 20:52:15 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,7 @@ static void	clean_up(t_info *info, t_pf *pf, t_philo **philos)
 {
 	int	i;
 
-	if (pf->philos)
-		free(pf->philos);
+	free(pf->philos);
 	if (pf->forks)
 	{
 		i = -1;
@@ -29,8 +28,13 @@ static void	clean_up(t_info *info, t_pf *pf, t_philo **philos)
 	{
 		i = -1;
 		while (++i < info->number_of_philos)
-			if ((philos)[i])
-				free((philos)[i]);
+		{
+			if (philos[i])
+			{
+				pthread_mutex_destroy(&philos[i]->died);
+				free(philos[i]);
+			}
+		}
 		free(philos);
 	}
 	pthread_mutex_destroy(&info->eat_count_mutex);
@@ -49,6 +53,8 @@ static t_philo	*init_philo(int num, t_info *info, t_pf *pf)
 	philo->pf = pf;
 	philo->eat_count = 0;
 	philo->last_eat = &info->start_time;
+	if (pthread_mutex_init(&philo->died, NULL))
+		return (free(philo), NULL);
 	if (gettimeofday(philo->last_eat, NULL))
 		return (free(philo), NULL);
 	return (philo);
@@ -85,9 +91,9 @@ static t_philo	**init_philos(t_info *info, t_pf *pf)
 
 static void	*finish_control(void *args)
 {
-	int				i;
-	t_philo			**philos;
-	t_info			*info;
+	int		i;
+	t_philo	**philos;
+	t_info	*info;
 
 	philos = (t_philo **)args;
 	if (!philos || !philos[0])
@@ -100,9 +106,11 @@ static void	*finish_control(void *args)
 		i = -1;
 		while (++i < info->number_of_philos)
 		{
+			pthread_mutex_lock(&philos[i]->died);
 			if (get_ms(philos[i]->last_eat) < (get_current_ms() - \
 					info->time_to_die))
 				return (print_state("died", philos[i]), NULL);
+			pthread_mutex_unlock(&philos[i]->died);
 		}
 		usleep(100);
 	}

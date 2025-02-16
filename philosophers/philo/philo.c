@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 17:06:24 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/14 19:49:43 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/16 20:58:55 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,12 @@ static void	p_eat(t_philo *philo, pthread_mutex_t *l_fork,
 	print_state("has taken a fork", philo);
 	pthread_mutex_lock(r_fork);
 	print_state("has taken a fork", philo);
+	pthread_mutex_lock(&philo->died);
 	print_state("is eating", philo);
 	gettimeofday(tv, NULL);
 	philo->last_eat = tv;
+	pthread_mutex_unlock(&philo->died);
 	wait_ms(philo->info->time_to_eat, philo->info);
-	pthread_mutex_unlock(l_fork);
-	pthread_mutex_unlock(r_fork);
 	++philo->eat_count;
 	if (philo->eat_count == philo->info->must_eat)
 	{
@@ -37,6 +37,8 @@ static void	p_eat(t_philo *philo, pthread_mutex_t *l_fork,
 		++philo->info->total_ate;
 		pthread_mutex_unlock(&philo->info->eat_count_mutex);
 	}
+	pthread_mutex_unlock(l_fork);
+	pthread_mutex_unlock(r_fork);
 }
 
 static void	p_sleep(t_philo *philo)
