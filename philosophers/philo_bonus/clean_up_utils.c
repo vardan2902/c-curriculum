@@ -6,39 +6,40 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/16 19:07:22 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/16 21:51:28 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 16:07:47 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void	sem_close_opened(t_info *info)
+void	kill_processes(t_info *info)
 {
-	sem_post(info->forks);
-	sem_post(info->eat_count_sem);
-	sem_post(info->died_sem);
-	sem_post(info->finish_sem);
-	sem_post(info->print_sem);
+	int	i;
+
+	i = -1;
+	while (++i < info->number_of_philos)
+		kill(info->philos[i], SIGINT);
+}
+
+static void	sem_close_opened(t_info *info)
+{
 	sem_close(info->forks);
-	sem_close(info->eat_count_sem);
-	sem_close(info->print_sem);
-	sem_close(info->died_sem);
-	sem_close(info->finish_sem);
+	sem_close(info->print);
+	sem_close(info->eat_count);
+	sem_close(info->stop);
 }
 
 void	unlink_named_sem(void)
 {
 	sem_unlink(FORKS_SEM);
-	sem_unlink(EAT_COUNT_SEM);
 	sem_unlink(PRINT_SEM);
-	sem_unlink(DIED_SEM);
-	sem_unlink(FINISH_SEM);
+	sem_unlink(EAT_COUNT_SEM);
+	sem_unlink(STOP_SEM);
 }
 
 void	clean_up(t_info *info)
 {
-	if (info->philos)
-		free(info->philos);
+	kill_processes(info);
 	sem_close_opened(info);
 	unlink_named_sem();
 }

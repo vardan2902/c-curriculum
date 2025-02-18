@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 17:58:03 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/16 20:52:15 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/17 17:47:02 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,7 @@ static void	*finish_control(void *args)
 				return (print_state("died", philos[i]), NULL);
 			pthread_mutex_unlock(&philos[i]->died);
 		}
-		usleep(100);
+		usleep(1000);
 	}
 	return (NULL);
 }

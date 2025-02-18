@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 17:58:03 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/16 21:57:10 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 16:02:32 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,26 +27,29 @@ static void	init_philo(int num, t_info *info)
 	exit(0);
 }
 
-static pid_t	*init_philos(t_info *info)
+static void	init_philos(t_info *info, pid_t philos[200])
 {
 	int		i;
-	pid_t	*philos;
 
 	sem_unlink(FORKS_SEM);
 	info->forks = sem_open(FORKS_SEM, O_CREAT, 0644, info->number_of_philos);
+	if (info->forks == SEM_FAILED)
+		return ;
 	i = -1;
-	philos = (pid_t *)malloc(info->number_of_philos * sizeof (pid_t));
-	if (!philos || gettimeofday(&info->start_time, NULL) == -1)
-		return (NULL);
+	if (gettimeofday(&info->start_time, NULL) == -1)
+		return ;
 	while (++i < info->number_of_philos)
 	{
 		philos[i] = fork();
 		if (philos[i] == -1)
+		{
+			while (i--)
+				kill(philos[i], SIGINT);
 			exit(0);
+		}
 		if (!philos[i])
 			init_philo(i + 1, info);
 	}
-	return (philos);
 }
 
 static void	*finish_check(void *args)
@@ -57,43 +60,25 @@ static void	*finish_check(void *args)
 	info = (t_info *)args;
 	i = info->number_of_philos;
 	while (--i >= 0)
-		sem_wait(info->eat_count_sem);
-	alert_finish(info);
-	return (NULL);
-}
-
-static void	*died_check(void *args)
-{
-	t_info	*info;
-
-	info = (t_info *)args;
-	sem_wait(info->died_sem);
-	alert_finish(info);
+		sem_wait(info->eat_count);
+	sem_wait(info->print);
+	sem_post(info->stop);
 	return (NULL);
 }
 
 int	main(int argc, char *argv[])
 {
 	t_info		info;
-	pid_t		*philos;
-	pthread_t	died_check_thread;
 	pthread_t	finish_check_thread;
 
 	if (!parse_args(argc, argv, &info))
 		return (1);
-	philos = init_philos(&info);
-	info.philos = philos;
-	if (!philos)
+	init_philos(&info, info.philos);
+	if (info.must_eat > 0 && (pthread_create(&finish_check_thread,
+				NULL, &finish_check, &info)
+			|| pthread_detach(finish_check_thread)))
 		return (clean_up(&info), 1);
-	if (pthread_create(&died_check_thread, NULL, &died_check, &info)
-		|| pthread_detach(died_check_thread))
-		return (clean_up(&info), 1);
-	if (pthread_create(&finish_check_thread, NULL, &finish_check, &info)
-		|| pthread_detach(finish_check_thread))
-		return (clean_up(&info), 1);
-	while (wait(NULL) > 0)
-		;
-	usleep(5000);
+	sem_wait(info.stop);
 	clean_up(&info);
 	return (0);
 }
