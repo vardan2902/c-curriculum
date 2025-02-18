@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/16 19:07:22 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/18 16:07:47 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 16:31:40 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,11 @@ void	kill_processes(t_info *info)
 
 static void	sem_close_opened(t_info *info)
 {
+	int	i;
+
+	i = -1;
+	while (++i < info->number_of_philos)
+		sem_post(info->eat_count);
 	sem_close(info->forks);
 	sem_close(info->print);
 	sem_close(info->eat_count);

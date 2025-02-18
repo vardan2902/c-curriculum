@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 16:16:40 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/18 15:15:19 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 16:55:21 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ typedef struct s_general_info
 typedef struct s_philo
 {
 	t_info		*info;
+	sem_t		*meal;
 	t_timeval	last_eat;
 	int			num;
 	int			eat_count;

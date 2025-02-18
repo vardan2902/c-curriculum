@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 17:35:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/18 15:17:07 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 16:59:41 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,9 @@ static int	philo_atoi(const char *str)
 int	open_semaphores(t_info *info)
 {
 	unlink_named_sem();
-	info->eat_count = sem_open(EAT_COUNT_SEM, O_CREAT, 0644, 0);
-	info->stop = sem_open(STOP_SEM, O_CREAT, 0644, 0);
-	info->print = sem_open(PRINT_SEM, O_CREAT, 0644, 1);
+	info->eat_count = sem_open(EAT_COUNT_SEM, O_CREAT, 0600, 0);
+	info->stop = sem_open(STOP_SEM, O_CREAT, 0600, 0);
+	info->print = sem_open(PRINT_SEM, O_CREAT, 0600, 1);
 	if (info->eat_count == SEM_FAILED || info->stop == SEM_FAILED
 		|| info->print == SEM_FAILED)
 		return (0);

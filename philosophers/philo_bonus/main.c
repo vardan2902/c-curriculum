@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/13 17:58:03 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/18 16:02:32 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/18 17:00:02 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ static void	init_philos(t_info *info, pid_t philos[200])
 	int		i;
 
 	sem_unlink(FORKS_SEM);
-	info->forks = sem_open(FORKS_SEM, O_CREAT, 0644, info->number_of_philos);
+	info->forks = sem_open(FORKS_SEM, O_CREAT, 0600, info->number_of_philos);
 	if (info->forks == SEM_FAILED)
 		return ;
 	i = -1;
