@@ -4,11 +4,11 @@ MAKE			=	make
 LIBFT_DIR		=	./libft
 READLINE_DIR	=	./readline
 INCLUDES		=	-I$(LIBFT_DIR) -I$(READLINE_DIR) -I./inc
-LINKERS			=	-L$(LIBFT_DIR) -lft -L$(READLINE_DIR) -lreadline
-CFLAGS			=	-Wall -Wextra -Werror
+LINKERS			=	-L$(LIBFT_DIR) -lft -L$(READLINE_DIR) -lreadline -ltermcap
+CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address
 OBJ_DIR			=	obj
 SRC_DIR			=	src
-SRC_FILES		=	main.c
+SRC_FILES		=	main.c ast/ast.c env/ht.c env/ht_resize.c tokenizer/tokenizer.c
 SRCS			=	$(addprefix $(SRC_DIR)/, $(SRC_FILES))
 OBJS			=	$(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 LIBFT			=	$(LIBFT_DIR)/libft.a
