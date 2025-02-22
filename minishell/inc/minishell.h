@@ -11,5 +11,6 @@
 # include "env.h"
 # include "token_lst.h"
 # include "ast.h"
+# include "minishell_utils.h"
 
 #endif

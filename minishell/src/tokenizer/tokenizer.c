@@ -26,21 +26,6 @@ t_token	*create_token(char *value, t_cmd_token_types type)
 		return (free(value), NULL);
 	token->value = value;
 	token->type = type;
-	token->quoting_state = Q_NONE;
-	return (token);
-}
-
-t_token	*create_token_with_state(char *value, t_cmd_token_types type,
-	t_quoting_state state)
-{
-	t_token	*token;
-
-	token = (t_token *)malloc(sizeof (t_token));
-	if (!token)
-		return (free(value), NULL);
-	token->value = value;
-	token->type = type;
-	token->quoting_state = state;
 	return (token);
 }
 
@@ -67,6 +52,7 @@ t_token	*get_operator_token(char **prompt)
 	return (NULL);
 }
 
+/*
 t_token	*get_variable_token(char **prompt, t_ht *ht_env)
 {
 	char	*start;
@@ -90,7 +76,9 @@ t_token	*get_variable_token(char **prompt, t_ht *ht_env)
 		return (NULL);
 	return (create_token(value, T_WORD));
 }
+*/
 
+/*
 char *append_variable_value(char **prompt, char *word, size_t *len, t_ht *ht_env)
 {
 	char	*start;
@@ -121,7 +109,8 @@ char *append_variable_value(char **prompt, char *word, size_t *len, t_ht *ht_env
 	free(value);
 	return (word);
 }
-
+*/
+/*
 char	*append_regular_character(char **prompt, char *word, size_t *len)
 {
 	char	*new_word;
@@ -139,7 +128,8 @@ char	*append_regular_character(char **prompt, char *word, size_t *len)
 	++(*prompt);
 	return (new_word);
 }
-
+*/
+/*
 t_token	*handle_double_quotes(char **prompt, t_ht *ht_env)
 {
 	char	*word;
@@ -165,32 +155,28 @@ t_token	*handle_double_quotes(char **prompt, t_ht *ht_env)
 		return (free(word), NULL);
 	return (create_token_with_state(word, T_WORD, Q_DOUBLE));
 }
-
-t_token	*handle_single_quotes(char **prompt)
+*/
+size_t	handle_quotes(char **prompt, char quote)
 {
 	char	*start;
-	char	*value;
 
-	++(*prompt);
 	start = *prompt;
-	while (**prompt && **prompt != '\'')
-		++(*prompt);
-	if (**prompt != '\'')
-		return (NULL);
-	value = ft_substr(start, 0, *prompt - start);
-	if (!value)
-		return (NULL);
 	++(*prompt);
-	return (create_token_with_state(value, T_WORD, Q_SINGLE));
+	while (**prompt && **prompt != quote)
+		++(*prompt);
+	if (**prompt != quote)
+		return (0);
+	++(*prompt);
+	return (*prompt - start);
 }
 
-t_token	*get_next_token(char **prompt, t_ht *ht_env)
+t_token	*get_next_token(char **prompt)
 {
 	char	*start;
 	char	*value;
+	size_t	len;
 	t_token	*token;
 
-	skip_whitespaces(prompt);
 	start = *prompt;
 	if (**prompt == '\0')
 		return (NULL);
@@ -199,24 +185,24 @@ t_token	*get_next_token(char **prompt, t_ht *ht_env)
 		return (token);
 	if (**prompt == '&')
 		return (NULL);
-	token = get_variable_token(prompt, ht_env);
-	if (token)
-		return (token);
-	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&|<>", **prompt))
+	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&|<> \t\r\v\f\n", **prompt))
 	{
-		if (**prompt == '"')
-			return (handle_double_quotes(prompt, ht_env));
-		if (**prompt == '\'')
-			return (handle_single_quotes(prompt));
-		++(*prompt);
-	}	
+		if (**prompt == '"' || **prompt == '\'')
+		{
+		   len = handle_quotes(prompt, **prompt);
+		   if (!len)
+			   return (NULL);
+		}
+		else
+			++(*prompt);
+	}
 	value = ft_substr(start, 0, *prompt - start);
 	if (!value)
 		return (NULL);
 	return (create_token(value, T_WORD));
 }
 
-t_list	*get_token_lst(char *prompt, t_ht *ht_env)
+t_list	*get_token_lst(char *prompt)
 {
 	t_list	*token_lst;
 	t_list	*new_node;
@@ -225,7 +211,10 @@ t_list	*get_token_lst(char *prompt, t_ht *ht_env)
 	token_lst = NULL;
 	while (*prompt)
 	{
-		token = get_next_token(&prompt, ht_env);
+		skip_whitespaces(&prompt);
+		if (!*prompt)
+			break ;
+		token = get_next_token(&prompt);
 		if (!token)
 			return (ft_lstclear(&token_lst, &del_token), NULL);
 		new_node = ft_lstnew(token);

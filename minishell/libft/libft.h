@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/08 15:39:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/26 20:32:49 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/22 21:01:45 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,9 +54,9 @@ void			*ft_memset(void *b, int c, size_t len);
 void			*ft_memchr(const void *s, int c, size_t n);
 void			*ft_memmove(void *dst, const void *src, size_t len);
 void			ft_putnbr_fd(int n, int fd);
-void			ft_putendl_fd(char *s, int fd);
-void			ft_putstr_fd(char *s, int fd);
-void			ft_putchar_fd(char c, int fd);
+void			ft_putendl_fd(const char *s, int fd);
+void			ft_putstr_fd(const char *s, int fd);
+void			ft_putchar_fd(const char c, int fd);
 void			ft_striteri(char *s, void (*f)(unsigned int, char*));
 size_t			ft_strlen(const char *s);
 void			*ft_memcpy(void *dst, const void *src, size_t n);

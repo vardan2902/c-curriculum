@@ -3,13 +3,13 @@
 
 # include "minishell.h"
 
-typedef struct s_cmd			t_cmd;
-typedef struct s_ast			t_ast;
+typedef struct s_cmd	t_cmd;
+typedef struct s_ast	t_ast;
 
 struct s_cmd
 {
-	char				*name;
-	char				**args;
+	char	*name;
+	char	**args;
 };
 
 struct s_ast
@@ -22,6 +22,6 @@ struct s_ast
 	char				*redirection_path;
 };
 
-t_ast	*ast_create_from_tokens(t_list **token_lst);
+t_ast	*ast_create_from_tokens(t_list **token_lst, int indent);
 
 #endif

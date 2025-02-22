@@ -52,11 +52,11 @@ void	print_ast(t_ast *ast, int indent)
 		{
 			for (i = 0; i < indent + 1; i++)
 				printf("  ");
-			printf("Args:");
+			printf("Args: ");
 			j = 0;
 			while (ast->cmd->args[j])
 			{
-				printf(" %s", ast->cmd->args[j]);
+				printf("%s\t", ast->cmd->args[j]);
 				j++;
 			}
 			printf("\n");
@@ -94,11 +94,16 @@ int	main(int argc, char *argv[], char *envp[])
 	while (1)
 	{
 		line = readline("minishell $>");
-		token_lst = get_token_lst(line, &map);
-		// validate_tokens();
-		// create_ast
-		ast = ast_create_from_tokens(&token_lst);
-		print_ast(ast, 2);
+		if (line && *line)
+		{
+			token_lst = get_token_lst(line);
+			if (!token_lst)
+				continue ;
+			ast = ast_create_from_tokens(&token_lst, 0);
+			if (!ast)
+				continue ;
+			print_ast(ast, 2);
+		}
 	}
 		(void)ast;
 	return (0);
