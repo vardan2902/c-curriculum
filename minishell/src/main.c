@@ -3,9 +3,8 @@
 #include "minishell.h"
 #include <stdio.h>
 
-/* 
+/*
  * Helper: Convert token type to a human‐readable string.
- * Adjust these based on your enum or macro definitions.
  */
 static const char	*token_type_to_str(int type)
 {
@@ -25,6 +24,14 @@ static const char	*token_type_to_str(int type)
 		return ("OPEN_PARENTHESIS");
 	else if (type == T_CLOSE_PARENTHESIS)
 		return ("CLOSE_PARENTHESIS");
+	else if (type == T_INPUT)
+		return ("INPUT (<)");
+	else if (type == T_OUTPUT)
+		return ("OUTPUT (>)");
+	else if (type == T_APPEND)
+		return ("APPEND (>>)");
+	else if (type == T_HEREDOC)
+		return ("HEREDOC (<<)");
 	return ("UNKNOWN");
 }
 
@@ -35,19 +42,26 @@ void	print_ast(t_ast *ast, int indent)
 {
 	int i;
 	int j;
+	t_list *redir_it;
+	t_redirection *redir;
 
 	if (!ast)
 		return;
+
 	// Print indentation for the current node
 	for (i = 0; i < indent; i++)
 		printf("  ");
 	printf("Node [%s]\n", token_type_to_str(ast->token));
+
 	// If this is a command node, print its details
 	if (ast->token == T_CMD && ast->cmd)
 	{
+		// Print command name
 		for (i = 0; i < indent + 1; i++)
 			printf("  ");
 		printf("Command: %s\n", ast->cmd->name);
+
+		// Print command arguments
 		if (ast->cmd->args)
 		{
 			for (i = 0; i < indent + 1; i++)
@@ -56,12 +70,30 @@ void	print_ast(t_ast *ast, int indent)
 			j = 0;
 			while (ast->cmd->args[j])
 			{
-				printf("%s\t", ast->cmd->args[j]);
+				printf("%s ", ast->cmd->args[j]);
 				j++;
 			}
 			printf("\n");
 		}
+
+		// Print redirections
+		if (ast->cmd->redirections)
+		{
+			for (i = 0; i < indent + 1; i++)
+				printf("  ");
+			printf("Redirections:\n");
+			redir_it = ast->cmd->redirections;
+			while (redir_it)
+			{
+				redir = (t_redirection *)redir_it->content;
+				for (i = 0; i < indent + 2; i++)
+					printf("  ");
+				printf("[%s] -> %s\n", token_type_to_str(redir->type), redir->target);
+				redir_it = redir_it->next;
+			}
+		}
 	}
+
 	// Print left subtree
 	if (ast->left)
 	{
@@ -70,6 +102,7 @@ void	print_ast(t_ast *ast, int indent)
 		printf("Left:\n");
 		print_ast(ast->left, indent + 2);
 	}
+
 	// Print right subtree
 	if (ast->right)
 	{
@@ -79,6 +112,7 @@ void	print_ast(t_ast *ast, int indent)
 		print_ast(ast->right, indent + 2);
 	}
 }
+
 
 
 int	main(int argc, char *argv[], char *envp[])

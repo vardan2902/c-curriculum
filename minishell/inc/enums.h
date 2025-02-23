@@ -13,19 +13,14 @@ enum e_cmd_token_types
 	T_WORD,
 	T_CMD,
 	T_PIPE,
-	T_REDIRECT,
+	T_INPUT,
+	T_OUTPUT,
+	T_APPEND,
+	T_HEREDOC,
 	T_AND,
 	T_OR,
 	T_OPEN_PARENTHESIS,
 	T_CLOSE_PARENTHESIS,
-};
-
-enum e_redirections
-{
-	R_TO,
-	R_FROM,
-	R_HEREDOC,
-	R_APPEND,
 };
 
 enum e_quoting_state

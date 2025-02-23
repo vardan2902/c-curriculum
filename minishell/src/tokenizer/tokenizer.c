@@ -36,15 +36,15 @@ t_token	*get_operator_token(char **prompt)
 	if (ft_strncmp(*prompt, "&&", 2) == 0)
 		return ((*prompt) += 2, create_token(ft_strdup("&&"), T_AND));
 	if (ft_strncmp(*prompt, "<<", 2) == 0)
-		return ((*prompt) += 2, create_token(ft_strdup("<<"), T_REDIRECT));
+		return ((*prompt) += 2, create_token(ft_strdup("<<"), T_HEREDOC));
 	if (ft_strncmp(*prompt, ">>", 2) == 0)
-		return ((*prompt) += 2, create_token(ft_strdup(">>"), T_REDIRECT));
+		return ((*prompt) += 2, create_token(ft_strdup(">>"), T_APPEND));
 	if (**prompt == '|')
 		return (++(*prompt), create_token(ft_strdup("|"), T_PIPE));
 	if (**prompt == '>')
-		return (++(*prompt), create_token(ft_strdup(">"), T_REDIRECT));
+		return (++(*prompt), create_token(ft_strdup(">"), T_OUTPUT));
 	if (**prompt == '<')
-		return (++(*prompt), create_token(ft_strdup("<"), T_REDIRECT));
+		return (++(*prompt), create_token(ft_strdup("<"), T_INPUT));
 	if (**prompt == '(')
 		return (++(*prompt), create_token(ft_strdup("("), T_OPEN_PARENTHESIS));
 	if (**prompt == ')')
@@ -185,7 +185,7 @@ t_token	*get_next_token(char **prompt)
 		return (token);
 	if (**prompt == '&')
 		return (NULL);
-	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&|<> \t\r\v\f\n", **prompt))
+	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&|<># \t\r\v\f\n", **prompt))
 	{
 		if (**prompt == '"' || **prompt == '\'')
 		{
@@ -214,6 +214,12 @@ t_list	*get_token_lst(char *prompt)
 		skip_whitespaces(&prompt);
 		if (!*prompt)
 			break ;
+		if (*prompt == '#')
+		{
+			while (*prompt)
+				++prompt;
+			break ;
+		}
 		token = get_next_token(&prompt);
 		if (!token)
 			return (ft_lstclear(&token_lst, &del_token), NULL);
