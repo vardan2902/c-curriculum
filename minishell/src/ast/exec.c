@@ -41,7 +41,30 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 	return (NULL);
 }
 
-void	append_to_result(char **result, const char *str)
+void	*ft_free(void *ptr)
+{
+	if (ptr)
+		free(ptr);
+	return (NULL);
+}
+
+void	append_to_result(t_char_arr *arr, char *new_item)
+{
+	char	**tmp;
+	size_t	i;
+
+	tmp = (char **)malloc((arr->size + 2) * sizeof (char *));
+	i = -1;
+	while (++i < arr->size)
+		tmp[i] = arr->arr[i];
+	tmp[i++] = new_item;
+	tmp[i] = NULL;
+	free(arr->arr);
+	arr->arr = tmp;
+	++(arr->size);
+}
+
+void	append_str(char **result, const char *str)
 {
 	char	*tmp;
 
@@ -50,113 +73,162 @@ void	append_to_result(char **result, const char *str)
 	*result = tmp;
 }
 
-void	expand_variable(const char *token, int *i, char **result, t_ht *env)
+void	split_and_append(t_char_arr *result, const char *str)
 {
-	char	key[256];
-	char	*value;
-	int		j;
+	char	**tokens;
+	int		i;
 
-	j = 0;
-	++(*i);
-	if (token[*i] == '{')
-	{
-		++(*i);
-		while (token[*i] && token[*i] != '}')
-			key[j++] = token[(*i)++];
-		key[j] = '\0';
-		++(*i);
-	}
-	else
-	{
-		while (token[*i] && (ft_isalnum(token[*i]) || token[*i] == '_'))
-			key[j++] = token[(*i)++];
-		key[j] = '\0';
-	}
-	value = ht_get(env, key);
-	if (value)
-		append_to_result(result, value);
-	--(*i);
+	tokens = ft_split(str, ' ');
+	if (!tokens)
+		return ;
+	i = -1;
+	while (tokens[++i])
+		append_to_result(result, tokens[i]);
+	free(tokens);
 }
 
-void	expand_wildcard(char **result)
+char	*extract_var_name(const char *token, int *i)
+{
+	int		start;
+	int		len;
+	char	*var_name;
+
+	start = *i + 1;
+	if (token[start] == '?')
+	{
+		*i = start;
+		return (ft_strdup("?"));
+	}
+	if (token[start] == '$')
+	{
+		*i = start;
+		return (ft_strdup("$"));
+	}
+	len = 0;
+	while (ft_isalnum(token[start + len]) || token[start + len] == '_')
+		len++;
+	if (len == 0)
+		return (NULL);
+	var_name = ft_substr(token, start, len);
+	if (!var_name)
+		return (NULL);
+	*i = start + len - 1;
+	return (var_name);
+}
+
+void	expand_variable(const char *token, int *i, char **current, t_ht *env)
+{
+	char	*key;
+	char	*value;
+
+	key = extract_var_name(token, i);
+	if (!key)
+		return ;
+	value = ht_get(env, key);
+	if (value)
+		append_str(current, value);
+	free(key);
+}
+
+void	expand_wildcard(t_char_arr *result)
 {
 	DIR				*dir;
 	struct dirent	*entry;
-	
+
 	dir = opendir(".");
 	if (dir)
 	{
 		while ((entry = readdir(dir)) != NULL)
 		{
 			if (entry->d_name[0] != '.')
-			{
-				append_to_result(result, entry->d_name);
-				append_to_result(result, " ");
-			}
+				append_to_result(result, ft_strdup(entry->d_name));
 		}
 		closedir(dir);
 	}
 }
 
-static void handle_quotes(const char *token, int *i, bool *in_single_quotes, bool *in_double_quotes)
+static void handle_quotes(char token, bool *in_single_quotes, bool *in_double_quotes)
 {
-	if (token[*i] == '\'' && !(*in_double_quotes))
+	if (token == '\'' && !(*in_double_quotes))
 		*in_single_quotes = !(*in_single_quotes);
-	else if (token[*i] == '"' && !(*in_single_quotes))
+	else if (token == '"' && !(*in_single_quotes))
 		*in_double_quotes = !(*in_double_quotes);
-	if (token[*i] == '\'' || token[*i] == '"')
-		++(*i);
 }
 
-char	*expand_text(const char *token, t_ht *env)
+t_char_arr	*expand_text(const char *token, t_ht *env)
 {
-	char	*result;;
-	bool	in_single_quotes;
-	bool	in_double_quotes;
-	int		i;
-	char	char_str[2];
+	t_char_arr	*result;
+	bool		in_single_quotes;
+	bool		in_double_quotes;
+	int			i;
+	char		*current;
+	char		token_char[2];
 
-	result = ft_strdup("");
+	result = (t_char_arr *)ft_calloc(1, sizeof(t_char_arr));
 	if (!result)
 		return (NULL);
+	current = ft_strdup("");
+	if (!current)
+	{
+		free(result);
+		return (NULL);
+	}
 	i = -1;
 	in_double_quotes = false;
 	in_single_quotes = false;
+
 	while (token[++i])
 	{
-		handle_quotes(token, &i, &in_single_quotes, &in_double_quotes);
+		handle_quotes(token[i], &in_single_quotes, &in_double_quotes);
+		if (token[i] == '\'' || token[i] == '"')
+			continue ;
 		if (token[i] == '$' && !in_single_quotes)
-			expand_variable(token, &i, &result, env);
+		{
+			expand_variable(token, &i, &current, env);
+			if (!in_double_quotes)
+			{
+				split_and_append(result, current);
+				current = ft_strdup("");
+			}
+		}
 		else if (token[i] == '*' && !in_single_quotes && !in_double_quotes)
-			expand_wildcard(&result);
+		{
+			if (current[0] != '\0')
+				append_to_result(result, current);
+			current = ft_strdup("");
+			expand_wildcard(result);
+		}
 		else
 		{
-			char_str[0] = token[i];
-			char_str[1] = '\0';
-			append_to_result(&result, char_str);
+			token_char[0] = token[i];
+			token_char[1] = '\0';
+			append_str(&current, token_char);
 		}
 	}
+	if (current[0] != '\0')
+		append_to_result(result, current);
+	i = 0;
 	return (result);
 }
 
 int	handle_redirections(t_list *redir_lst, t_ht *env)
 {
 	int				fd;
-	char			*target;
+	t_char_arr		*target;
 	t_redirection	*redir;
 
 	while (redir_lst)
 	{
 		redir = (t_redirection *)redir_lst->content;
 		target = expand_text(redir->target, env);
-		if (!target)
+		if (!target || !target->arr || !*target->arr || !**target->arr)
 			return (1);
 		if (redir->type == T_INPUT)
-			fd = open(target, O_RDONLY);
+			fd = open(*target->arr, O_RDONLY);
 		else if (redir->type == T_OUTPUT)
-			fd = open(target, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			fd = open(*target->arr, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		else if (redir->type == T_APPEND)
-			fd = open(target, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			fd = open(*target->arr, O_WRONLY | O_CREAT | O_APPEND, 0644);
 		else if (redir->type == T_HEREDOC)
 			// TODO: add heredoc handler
 			fd = open(".heredoc", O_RDWR | O_CREAT | O_TRUNC);
@@ -164,6 +236,7 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 			dup2(fd, STDIN_FILENO);
 		else if (redir->type == T_APPEND || redir->type == T_OUTPUT)
 			dup2(fd, STDOUT_FILENO);
+		free(target->arr);
 		free(target);
 		target = NULL;
 		if (fd < 0)
@@ -201,32 +274,36 @@ bool is_builtin(const char *cmd)
 
 void	exec_non_builtin(t_ast *node, t_ht *env)
 {
-	int		i;
-	char	**envp;
-	char	*cmd_name;
-	char	*error_msg;
+	size_t		i;
+	size_t		j;
+	char		*cmd_path;
+	t_char_arr	*expanded;
+	t_char_arr	*args;
 
-	node->cmd->name = expand_text(node->cmd->name, env);
-	cmd_name = build_cmd_path(node->cmd->name, env);
-	if (!cmd_name)
-	{
-		error_msg = ft_strjoin("minishell: ", node->cmd->name);
-		if (!error_msg)
-		{
-			free(node->cmd->name);
-			exit(127);
-		}
-		perror(error_msg);
-		free(error_msg);
-		free(node->cmd->name);
+	args = (t_char_arr *)ft_calloc(1, sizeof (t_char_arr));
+	expanded = expand_text(node->cmd->name, env);
+	if (!expanded || !expanded->size)
+		return ;
+	cmd_path = build_cmd_path(*(expanded->arr), env);
+	if (!cmd_path)
 		exit(127);
-	}
-	free(node->cmd->name);
 	i = -1;
+	while (++i < expanded->size)
+		append_to_result(args, expanded->arr[i]);
+	i = 0;
 	while (node->cmd->args[++i])
-		node->cmd->args[i] = expand_text(node->cmd->args[i], env);
-	envp = ht_to_matrix(env);
-	execve(cmd_name, node->cmd->args, envp);
+	{
+		expanded = expand_text(node->cmd->args[i], env);
+		free(node->cmd->args[i]);
+		if (!expanded)
+			return ;
+		j = -1;
+		while (++j < expanded->size)
+			append_to_result(args, expanded->arr[j]);
+	}
+	i = -1;
+	free(node->cmd->args);
+	execve(cmd_path, args->arr, ht_to_matrix(env));
 	perror("minishell");
 	exit(1);
 }

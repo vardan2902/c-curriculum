@@ -6,6 +6,7 @@
 typedef struct s_cmd			t_cmd;
 typedef struct s_redirection	t_redirection;
 typedef struct s_ast			t_ast;
+typedef struct s_char_arr		t_char_arr;
 
 struct s_redirection
 {
@@ -18,6 +19,12 @@ struct s_cmd
 	char	*name;
 	char	**args;
 	t_list	*redirections;
+};
+
+struct s_char_arr
+{
+	char	**arr;
+	size_t	size;
 };
 
 struct s_ast
