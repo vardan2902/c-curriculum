@@ -29,5 +29,6 @@ void		ht_remove_entry(t_ht *map, const char *key);
 void		resize_map(t_ht *map);
 t_ht_node	**create_new_table(size_t size);
 void		rehash_nodes(t_ht *map, t_ht_node **new_table, size_t new_size);
+char		**ht_to_matrix(t_ht *map);
 
 #endif

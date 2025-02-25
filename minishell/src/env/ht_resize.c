@@ -59,7 +59,7 @@ char **ht_to_matrix(t_ht *map)
 	if (!matrix)
 	{
 		perror("malloc");
-		exit(EXIT_FAILURE);
+		return	(NULL);
 	}
 
 	for (i = 0; i < map->size; i++)
@@ -75,7 +75,7 @@ char **ht_to_matrix(t_ht *map)
 			if (!matrix[j])
 			{
 				perror("malloc");
-				exit(EXIT_FAILURE);
+				return (NULL);
 			}
 			snprintf(matrix[j], len, "%s=%s", node->key, (char *)node->value);
 			j++;

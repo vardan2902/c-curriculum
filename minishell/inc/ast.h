@@ -26,8 +26,10 @@ struct s_ast
 	t_cmd				*cmd;
 	t_ast				*left;
 	t_ast				*right;
+	bool				is_subshell;
 };
 
 t_ast	*ast_create_from_tokens(t_list **token_lst, int indent);
+int		execute_ast(t_ast *node, t_ht *env);
 
 #endif

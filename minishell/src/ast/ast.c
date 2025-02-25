@@ -169,8 +169,9 @@ static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst, int inden
 	}
 	*token_lst = (*token_lst)->next;
 	sub_ast = ast_create_from_tokens(token_lst, indent);
-	if (!(*token_lst))
+	if (!(*token_lst) || !sub_ast)
 		return (NULL);
+	sub_ast->is_subshell = true;
 	token = (t_token *)(*token_lst)->content;
 	if (*token_lst && token && token->type == T_CLOSE_PARENTHESIS)
 		*token_lst = (*token_lst)->next;
