@@ -95,15 +95,9 @@ char	*extract_var_name(const char *token, int *i)
 
 	start = *i + 1;
 	if (token[start] == '?')
-	{
-		*i = start;
-		return (ft_strdup("?"));
-	}
+		return (*i = start, ft_strdup("?"));
 	if (token[start] == '$')
-	{
-		*i = start;
-		return (ft_strdup("$"));
-	}
+		return (*i = start, ft_strdup("$"));
 	len = 0;
 	while (ft_isalnum(token[start + len]) || token[start + len] == '_')
 		len++;
@@ -147,12 +141,18 @@ void	expand_wildcard(t_char_arr *result)
 	}
 }
 
-static void handle_quotes(char token, bool *in_single_quotes, bool *in_double_quotes)
+static void handle_quotes(const char *token, int *i, bool *in_single_quotes, bool *in_double_quotes)
 {
-	if (token == '\'' && !(*in_double_quotes))
+	if (token[*i] == '\'' && !(*in_double_quotes))
+	{
 		*in_single_quotes = !(*in_single_quotes);
-	else if (token == '"' && !(*in_single_quotes))
+		++(*i);
+	}
+	else if (token[*i] == '"' && !(*in_single_quotes))
+	{
 		*in_double_quotes = !(*in_double_quotes);
+		++(*i);
+	}
 }
 
 t_char_arr	*expand_text(const char *token, t_ht *env)
@@ -169,26 +169,28 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 		return (NULL);
 	current = ft_strdup("");
 	if (!current)
-	{
-		free(result);
-		return (NULL);
-	}
+		return (free(result), NULL);
 	i = -1;
 	in_double_quotes = false;
 	in_single_quotes = false;
-
 	while (token[++i])
 	{
-		handle_quotes(token[i], &in_single_quotes, &in_double_quotes);
-		if (token[i] == '\'' || token[i] == '"')
-			continue ;
+		handle_quotes(token, &i, &in_single_quotes, &in_double_quotes);
+		if (!token[i])
+			break ;
 		if (token[i] == '$' && !in_single_quotes)
 		{
 			expand_variable(token, &i, &current, env);
 			if (!in_double_quotes)
 			{
 				split_and_append(result, current);
-				current = ft_strdup("");
+				if (result->size > 0)
+				{
+					current = result->arr[result->size - 1];
+					result->size--;
+				}
+				else
+					current = ft_strdup("");
 			}
 		}
 		else if (token[i] == '*' && !in_single_quotes && !in_double_quotes)
@@ -216,6 +218,7 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 	int				fd;
 	t_char_arr		*target;
 	t_redirection	*redir;
+	char			*line;
 
 	while (redir_lst)
 	{
@@ -230,11 +233,28 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 		else if (redir->type == T_APPEND)
 			fd = open(*target->arr, O_WRONLY | O_CREAT | O_APPEND, 0644);
 		else if (redir->type == T_HEREDOC)
-			// TODO: add heredoc handler
-			fd = open(".heredoc", O_RDWR | O_CREAT | O_TRUNC);
-		if (redir->type == T_HEREDOC || redir->type == T_INPUT)
+		{
+			unlink(".heredoc");
+			fd = open(".heredoc", O_WRONLY | O_CREAT | O_TRUNC);
+		}
+		if (fd != -1 && (redir->type == T_INPUT || redir->type == T_HEREDOC))
+		{
+			if (redir->type == T_HEREDOC)
+			{
+				while (1)
+				{
+					line = readline("> ");
+					if (!line || !ft_strcmp(line, redir->target))
+						break ;
+					ft_putendl_fd(line, fd);
+					free(line);
+				}
+				close(fd);
+				fd = open(".heredoc", O_RDONLY);
+			}
 			dup2(fd, STDIN_FILENO);
-		else if (redir->type == T_APPEND || redir->type == T_OUTPUT)
+		}
+		else if (fd != -1 && (redir->type == T_APPEND || redir->type == T_OUTPUT))
 			dup2(fd, STDOUT_FILENO);
 		free(target->arr);
 		free(target);
@@ -242,28 +262,39 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 		if (fd < 0)
 			return (1);
 		close(fd);
+		unlink(".heredoc");
 		redir_lst = redir_lst->next;
 	}
 	return (0);
 }
 
-bool is_builtin(const char *cmd)
+char	*get_lower_cmd(const char *cmd)
 {
 	size_t	i;
-	size_t		len;
+	size_t	len;
 	char	*lower_cmd;
-	bool	builtin;
 
 	if (!cmd)
-		return (false);
+		return (NULL);
 	len = ft_strlen(cmd);
 	lower_cmd = (char *)malloc((len + 1) * sizeof (char));
 	if (!lower_cmd)
-		return (false);
+		return (NULL);
 	i = -1;
 	while (++i < len)
 		lower_cmd[i] = ft_tolower(cmd[i]);
 	lower_cmd[i] = '\0';
+	return (lower_cmd);
+}
+
+bool is_builtin(const char *cmd)
+{
+	char	*lower_cmd;
+	bool	builtin;
+
+	lower_cmd = get_lower_cmd(cmd);
+	if (!lower_cmd)
+		return (false);
 	builtin = (!ft_strcmp(lower_cmd, "echo") || !ft_strcmp(lower_cmd, "cd")
 		|| !ft_strcmp(lower_cmd, "pwd") || !ft_strcmp(lower_cmd, "unset")
 		|| !ft_strcmp(lower_cmd, "export") || !ft_strcmp(lower_cmd, "env")
@@ -301,18 +332,39 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 		while (++j < expanded->size)
 			append_to_result(args, expanded->arr[j]);
 	}
-	i = -1;
 	free(node->cmd->args);
 	execve(cmd_path, args->arr, ht_to_matrix(env));
 	perror("minishell");
 	exit(1);
 }
 
+
+int (*get_builtin(char *cmd))(char **, t_ht *)
+{
+	char	*lower_cmd;
+
+	lower_cmd = get_lower_cmd(cmd);
+	if (!lower_cmd)
+		return (NULL);
+	if (!ft_strcmp(lower_cmd, "echo"))
+		return (&ft_echo);
+	if (!ft_strcmp(lower_cmd, "pwd"))
+		return (&ft_pwd);
+	if (!ft_strcmp(lower_cmd, "cd"))
+		return (&ft_cd);
+	return (NULL);
+}
+
 int	exec_builtin(t_ast *node, t_ht *env)
 {
-	int		saved_stdin;
-	int		saved_stdout;
-//	int		status;
+	int			saved_stdin;
+	int			saved_stdout;
+	int			status;
+	char		*status_str;
+	size_t		i;
+	size_t		j;
+	t_char_arr	*expanded;
+	t_char_arr	*args;
 
 	saved_stdin = dup(STDIN_FILENO);
 	saved_stdout = dup(STDOUT_FILENO);
@@ -321,13 +373,32 @@ int	exec_builtin(t_ast *node, t_ht *env)
 		perror("minishell");
 		return (1);
 	}
-//	status = exec_builtin(node, env);
+	args = (t_char_arr *)ft_calloc(1, sizeof (t_char_arr));
+	expanded = expand_text(node->cmd->name, env);
+	if (!expanded || !expanded->size)
+		return (127);
+	i = -1;
+	while (++i < expanded->size)
+		append_to_result(args, expanded->arr[i]);
+	i = 0;
+	while (node->cmd->args[++i])
+	{
+		expanded = expand_text(node->cmd->args[i], env);
+		free(node->cmd->args[i]);
+		if (!expanded)
+			return (127);
+		j = -1;
+		while (++j < expanded->size)
+			append_to_result(args, expanded->arr[j]);
+	}
+	status = (get_builtin(args->arr[0]))(args->arr, env);
+	status_str = ft_itoa(status);
+	ht_set(env, "?", status_str);
 	dup2(saved_stdin, STDIN_FILENO);
 	dup2(saved_stdout, STDOUT_FILENO);
 	close(saved_stdin);
 	close(saved_stdout);
-//	return (status);
-	return (0);
+	return (status);
 }
 
 int	execute_command(t_ast *node, t_ht *env)
@@ -421,27 +492,33 @@ int	execute_pipe(t_ast *node, t_ht *env)
 
 static int	execute_ast_impl(t_ast *node, t_ht *env)
 {
-	int	left_status;
+	int		status;
+	char	*status_str;
 
 	if (!node)
 		return (0);
 	if (node->token == T_CMD || node->token == T_NONE)
-		return (execute_command(node, env));
+	{
+		status = execute_command(node, env);
+		status_str = ft_itoa(status);
+		ht_set(env, "?", status_str);
+		return (status);
+	}
 	if (node->token == T_PIPE)
 		return (execute_pipe(node, env));
 	if (node->token == T_AND)
 	{
-		left_status = execute_ast(node->left, env);
-		if (left_status == 0)
+		status = execute_ast(node->left, env);
+		if (status == 0)
 			return (execute_ast(node->right, env));
-		return (left_status);
+		return (status);
 	}
 	if (node->token == T_OR)
 	{
-		left_status = execute_ast(node->left, env);
-		if (left_status != 0)
+		status = execute_ast(node->left, env);
+		if (status != 0)
 			return (execute_ast(node->right, env));
-		return (left_status);
+		return (status);
 	}
 	return (1);
 }

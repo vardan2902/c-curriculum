@@ -63,6 +63,7 @@ int	main(int argc, char *argv[], char *envp[])
     }
 	setup_signals(); 
 	ht_init_from_env(&map, envp);
+	ht_set(&map, "?", "0");
 	while (1)
 	{
 		line = readline("minishell $> ");

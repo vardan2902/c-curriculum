@@ -10,6 +10,8 @@
 # include <sys/wait.h>
 # include <fcntl.h>
 # include <dirent.h>
+# include <limits.h>
+# include <sys/stat.h>
 
 # include "enums.h"
 # include "libft.h"
@@ -19,5 +21,6 @@
 # include "token_lst.h"
 # include "ast.h"
 # include "minishell_utils.h"
+# include "builtins.h"
 
 #endif
