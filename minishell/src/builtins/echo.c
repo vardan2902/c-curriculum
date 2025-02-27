@@ -1,15 +1,13 @@
 #include "minishell.h"
 
-int	ft_echo(char **args, t_ht *env)
+static int	check_for_flag(char **args)
 {
 	int	i;
 	int	j;
-	int	print_nl;
+	int	nl_flag;
 
-	(void)env;
-	args += 1;
+	nl_flag = -1;
 	i = -1;
-	print_nl = -1;
 	while (args[++i])
 	{
 		j = 0;
@@ -19,15 +17,32 @@ int	ft_echo(char **args, t_ht *env)
 			continue ;
 		if (args[i][j] != '\0')
 			break ;
-		print_nl = i;
+		nl_flag = i;
 	}
-	i = print_nl;
+	return (nl_flag);
+}
+
+static void	print_args(char **args, int flag)
+{
+	int	i;
+
+	i = flag;
 	while (args[++i])
 	{
-		if (i > print_nl + 2)
+		if (i > flag + 1)
 			ft_putchar_fd(' ', 1);
 		ft_putstr_fd(args[i], 1);
 	}
+}
+
+int	ft_echo(char **args, t_ht *env)
+{
+	int	print_nl;
+
+	(void)env;
+	args += 1;
+	print_nl = check_for_flag(args);
+	print_args(args, print_nl);
 	if (print_nl == -1)
 		ft_putchar_fd('\n', 1);
 	return (0);

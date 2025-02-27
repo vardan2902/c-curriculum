@@ -70,7 +70,6 @@ t_token	*get_next_token(char **prompt)
 {
 	char	*start;
 	char	*value;
-	size_t	len;
 	t_token	*token;
 
 	start = *prompt;
@@ -85,8 +84,7 @@ t_token	*get_next_token(char **prompt)
 	{
 		if (**prompt == '"' || **prompt == '\'')
 		{
-		   len = handle_quotes(prompt, **prompt);
-		   if (!len)
+		   if (!handle_quotes(prompt, **prompt))
 			   return (NULL);
 		}
 		else

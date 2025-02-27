@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/08 15:39:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/22 21:01:45 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/02/27 16:27:55 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ void			ft_putnbr_fd(int n, int fd);
 void			ft_putendl_fd(const char *s, int fd);
 void			ft_putstr_fd(const char *s, int fd);
 void			ft_putchar_fd(const char c, int fd);
+int				ft_putchar(int c);
 void			ft_striteri(char *s, void (*f)(unsigned int, char*));
 size_t			ft_strlen(const char *s);
 void			*ft_memcpy(void *dst, const void *src, size_t n);

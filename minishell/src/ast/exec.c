@@ -17,6 +17,18 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 	char	*full_path;
 	char	*path;
 
+	if (ft_strchr(cmd, '/'))
+	{
+		if (access(cmd, X_OK) == 0)
+			return (cmd);
+		else
+		{
+			ft_putstr_fd("minishell: ", 2);
+			ft_putstr_fd(cmd, 2);
+			ft_putendl_fd(": No such file or directory", 2);
+			return (NULL);
+		}
+	}
 	path = ht_get(env, "PATH");
 	if (!path)
 		return (NULL);
@@ -38,6 +50,9 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 		free(full_path);
 	}
 	free_char_matrix(paths);
+	ft_putstr_fd("minishell: ", 2);
+	ft_putstr_fd(cmd, 2);
+	ft_putendl_fd(": command not found", 2);
 	return (NULL);
 }
 
@@ -352,6 +367,10 @@ int (*get_builtin(char *cmd))(char **, t_ht *)
 		return (&ft_pwd);
 	if (!ft_strcmp(lower_cmd, "cd"))
 		return (&ft_cd);
+	if (!ft_strcmp(lower_cmd, "unset"))
+		return (&ft_unset);
+	if (!ft_strcmp(lower_cmd, "exit"))
+		return (&ft_exit);
 	return (NULL);
 }
 

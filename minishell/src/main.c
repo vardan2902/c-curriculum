@@ -1,29 +1,19 @@
 #include "minishell.h"
 
-#include "minishell.h"
-#include <stdio.h>
-
 volatile sig_atomic_t	g_signal_int = 0;
 
-int	ft_putchar(int c)
+void	disable_echoctl(void)
 {
-	return (write(1, &c, 1));
+	struct termios	term;
+
+	if (tcgetattr(STDIN_FILENO, &term) == -1)
+		return (perror("tcgetattr"));
+	term.c_lflag &= ~ECHOCTL;
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &term) == -1)
+		perror("tcsetattr");
 }
 
-void disable_echoctl(void) {
-    struct termios term;
-
-    if (tcgetattr(STDIN_FILENO, &term) == -1) {
-        perror("tcgetattr");
-        return;
-    }
-    term.c_lflag &= ~ECHOCTL;
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &term) == -1) {
-        perror("tcsetattr");
-    }
-}
-
-void handle_sigint(int signum)
+void	handle_sigint(int signum)
 {
 	(void)signum;
 	g_signal_int = 1;
@@ -33,9 +23,9 @@ void handle_sigint(int signum)
 	rl_redisplay();
 }
 
-void setup_signals(void)
+void	setup_signals(void)
 {
-	struct sigaction sa;
+	struct sigaction	sa;
 
 	sa.sa_handler = handle_sigint;
 	sa.sa_flags = SA_RESTART;
@@ -48,20 +38,21 @@ void setup_signals(void)
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	(void)argc;
-	(void)argv;
 	t_ht	map;
 	char	*line;
 	t_list	*token_lst;
 	t_ast	*ast;	
 	char	*termtype;
 
+	(void)argc;
+	(void)argv;
 	termtype = getenv("TERM");
-    if (!termtype || tgetent(NULL, termtype) != 1) {
-        fprintf(stderr, "Could not initialize termcap.\n");
-        return 1;
-    }
-	setup_signals(); 
+	if (!termtype || tgetent(NULL, termtype) != 1)
+	{
+		ft_putendl_fd("Could not initialize termcap.", 2);
+		return (1);
+	}
+	setup_signals();
 	ht_init_from_env(&map, envp);
 	ht_set(&map, "?", "0");
 	while (1)
