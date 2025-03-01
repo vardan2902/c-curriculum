@@ -120,10 +120,10 @@ void	ht_remove_entry(t_ht *map, const char *key)
 		remove_node(map, node, prev, index);
 }
 
-// TODO: fix
 void	ht_init_from_env(t_ht *map, char **envp)
 {
 	size_t	i;
+	size_t	key_len;
 	char	*equal;
 	char	*key;
 	char	*value;
@@ -135,7 +135,7 @@ void	ht_init_from_env(t_ht *map, char **envp)
 		equal = ft_strchr(envp[i], '=');
 		if (!equal)
 			continue ;
-		size_t key_len = equal - envp[i];
+		key_len = equal - envp[i];
 		key = ft_substr(envp[i], 0, key_len);
 		value = ft_substr(equal + 1, 0, ft_strlen(equal + 1));
 		ht_set(map, key, value);

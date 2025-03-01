@@ -16,12 +16,8 @@ void	resize_map(t_ht *map)
 t_ht_node	**create_new_table(size_t size)
 {
 	t_ht_node	**new_table;
-	size_t		i;
 
-	i = -1;
-	new_table = (t_ht_node **)malloc(sizeof(t_ht_node *) * size);
-	while (++i < size)
-		new_table[i] = NULL;
+	new_table = (t_ht_node **)ft_calloc(size, sizeof (t_ht_node *));
 	return (new_table);
 }
 
@@ -47,8 +43,30 @@ void	rehash_nodes(t_ht *map, t_ht_node **new_table, size_t new_size)
 	}
 }
 
-// TODO: fix
-char **ht_to_matrix(t_ht *map)
+void	get_next_entry(t_ht_node *node, char **matrix, size_t *j)
+{
+	char	*tmp;
+
+	while (node)
+	{
+		if (ft_strchr("#?", node->key[0]))
+		{
+			node = node->next;
+			continue ;
+		}
+		tmp = ft_strjoin(node->key, "=");
+		if (!tmp)
+			return ;
+		matrix[*j] = ft_strjoin(tmp, node->value);
+		free(tmp);
+		if (!matrix[*j])
+			return ;
+		++(*j);
+		node = node->next;
+	}
+}
+
+char	**ht_to_matrix(t_ht *map)
 {
 	char	**matrix;
 	size_t  i;
@@ -61,34 +79,18 @@ char **ht_to_matrix(t_ht *map)
 		perror("malloc");
 		return	(NULL);
 	}
-
-	for (i = 0; i < map->size; i++)
-	{
-		t_ht_node *node = map->table[i];
-		while (node)
-		{
-			size_t key_len = ft_strlen(node->key);
-			size_t value_len = ft_strlen((char *)node->value);
-			size_t len = key_len + value_len + 2;
-
-			matrix[j] = malloc(len * sizeof(char));
-			if (!matrix[j])
-			{
-				perror("malloc");
-				return (NULL);
-			}
-			snprintf(matrix[j], len, "%s=%s", node->key, (char *)node->value);
-			j++;
-			node = node->next;
-		}
-	}
+	i = -1;
+	while (++i < map->size)
+		get_next_entry(map->table[i], matrix, &j);
 	matrix[j] = NULL;
 	return matrix;
 }
 
 void free_matrix(char **matrix)
 {
-	size_t i = -1;
+	size_t	i;
+
+	i = -1;
 	while (matrix[++i])
 		free(matrix[i]);
 	free(matrix);

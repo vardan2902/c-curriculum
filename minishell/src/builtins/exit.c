@@ -1,5 +1,33 @@
 #include "minishell.h"
 
+int	check_int_limit(const char *str)
+{
+	size_t			i;
+	int				sign;
+	long long int	num;
+	int				seen;
+	int				prev_num;
+
+	i = 0;
+	sign = 1;
+	num = 0;
+	seen = 0;
+	if (str[i] == '-' || str[i] == '+')
+		if (str[i++] == '-')
+			sign = -1;
+	while (ft_isdigit(str[i]))
+	{
+		seen = 1;
+		prev_num = num;
+		num = num * 10 + str[i++] - '0';
+		if ((sign == 1 && num < prev_num) || (sign == -1 && num > prev_num))
+			return (0);
+	}
+	if (str[i] || !seen)
+		return (0);
+	return (1);
+}
+
 static int	is_numeric(char *status)
 {
 	char	*trimmed;
@@ -12,7 +40,7 @@ static int	is_numeric(char *status)
 		++i;
 	while (ft_isdigit(trimmed[i]))
 		++i;
-	numeric = (trimmed[i] == 0);
+	numeric = (check_int_limit(trimmed) && trimmed[i] == 0);
 	free(trimmed);
 	return (numeric);
 }
@@ -25,7 +53,8 @@ int	ft_exit(char **args, t_ht *env)
 	(void)env;
 	i = 0;
 	args += 1;
-	ft_putendl_fd("exit", 2);
+	if (!ht_get(env, "#IS_SUBSHELL"))
+		ft_putendl_fd("exit", 1);
 	while (args[i])
 		++i;
 	if (!*args)

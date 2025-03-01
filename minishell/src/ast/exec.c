@@ -333,6 +333,7 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	cmd_path = build_cmd_path(*(expanded->arr), env);
 	if (!cmd_path)
 		exit(127);
+	ht_set(env, "_", cmd_path);
 	i = -1;
 	while (++i < expanded->size)
 		append_to_result(args, expanded->arr[i]);
@@ -371,6 +372,10 @@ int (*get_builtin(char *cmd))(char **, t_ht *)
 		return (&ft_unset);
 	if (!ft_strcmp(lower_cmd, "exit"))
 		return (&ft_exit);
+	if (!ft_strcmp(lower_cmd, "env"))
+		return (&ft_env);
+	if (!ft_strcmp(lower_cmd, "export"))
+		return (&ft_export);
 	return (NULL);
 }
 
@@ -410,7 +415,9 @@ int	exec_builtin(t_ast *node, t_ht *env)
 		while (++j < expanded->size)
 			append_to_result(args, expanded->arr[j]);
 	}
+	ht_set(env, "_", args->arr[0]);
 	status = (get_builtin(args->arr[0]))(args->arr, env);
+	ht_set(env, "_", args->arr[args->size - 1]);
 	status_str = ft_itoa(status);
 	ht_set(env, "?", status_str);
 	dup2(saved_stdin, STDIN_FILENO);
@@ -422,11 +429,21 @@ int	exec_builtin(t_ast *node, t_ht *env)
 
 int	execute_command(t_ast *node, t_ht *env)
 {
-	pid_t	pid;
-	int		status;
+	pid_t		pid;
+	int			status;
+	int			last;
+	t_char_arr	*expanded;
 
 	if (is_builtin(node->cmd->name)) 
 		return (exec_builtin(node, env));
+	last = 0;
+	while (node->cmd->args[last])
+		++last;
+	--last;
+	expanded = expand_text(node->cmd->args[last], env);
+	if (!expanded)
+		return (1);
+	ht_set(env, "_", expanded->arr[expanded->size - 1]);
 	pid = fork();
 	if (pid == 0)
 	{
@@ -554,6 +571,7 @@ int	execute_ast(t_ast *node, t_ht *env)
 		pid = fork();
 		if (pid == 0)
 		{
+			ht_set(env, "#IS_SUBSHELL", "TRUE");
 			status = execute_ast_impl(node, env);
 			exit(status);
 		}
