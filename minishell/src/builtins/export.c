@@ -25,7 +25,7 @@ static void	get_next_entry(t_ht_node *node, char ***entries, size_t *j)
 {
 	while (node)
 	{
-		if (ft_strchr("#?", node->key[0]))
+		if (node->key && ft_strchr("#?", node->key[0]))
 		{
 			node = node->next;
 			continue ;
@@ -56,29 +56,70 @@ char	***ht_to_entries(t_ht *map)
 	return (entries);
 }
 
+void	print_env(t_ht *env)
+{
+	int		i;
+	char	***env_entries;
+	
+	env_entries = ht_to_entries(env);
+	i = -1;
+	while (env_entries[++i])
+	{
+		printf("declare -x %s", env_entries[i][0]);
+		if (env_entries[i][1])
+			printf("=\"%s\"\n", env_entries[i][1]);
+		else
+			printf("\n");
+	}
+	free(env_entries);
+}
+
+int	is_valid_identifier(char *identifier)
+{
+	int	i;
+
+	i = -1;
+	while (identifier[++i])
+	{
+		if (i == 0 && (!ft_isalpha(identifier[i]) && identifier[i] != '_'))
+			return (print_error("minishell: export: `", identifier, "': not a valid identifier"), 0);
+		if (identifier[i] == '=')
+			break ;
+		if (!ft_isalnum(identifier[i]) && identifier[i] != '_')
+			return (print_error("minishell: export: `", identifier, "': not a valid identifier"), 0);
+	}
+	return (1);
+}
+
+void	export_new_env(char *token, t_ht *env)
+{
+	char	*eq;
+
+	eq = ft_strchr(token, '=');
+	if (eq)
+		ht_set(env, ft_substr(token, 0, eq - token), ft_substr(eq + 1, 0, ft_strlen(eq + 1)));
+	else
+		ht_set(env, ft_strdup(token), NULL);
+}
+
 int	ft_export(char **args, t_ht *env)
 {
-	char	***env_entries;
-	int		i;
+	int	i;
+	int	status;
 
 	i = 0;
+	status = 0;
 	while (args[i])
 		++i;
 	if (i == 1)
+		return (print_env(env), 0);
+	i = 0;
+	while (args[++i])
 	{
-		env_entries = ht_to_entries(env);
-		i = -1;
-		while (env_entries[++i])
-		{
-			printf("declare -x %s", env_entries[i][0]);
-			if (env_entries[i][1][0])
-				printf("=\"%s\"\n", env_entries[i][1]);
-			else
-				printf("\n");
-			free(env_entries[i][0]);
-			free(env_entries[i][1]);
-		}
-		free(env_entries);
+		if (is_valid_identifier(args[i]))
+			export_new_env(args[i], env);
+		else
+			status = 1;
 	}
-	return (0);
+	return (status);
 }

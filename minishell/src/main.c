@@ -33,7 +33,6 @@ void	setup_signals(void)
 	sigaction(SIGINT, &sa, NULL);
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGQUIT, &sa, NULL);
-	disable_echoctl();
 }
 
 int	main(int argc, char *argv[], char *envp[])
@@ -52,9 +51,11 @@ int	main(int argc, char *argv[], char *envp[])
 		ft_putendl_fd("Could not initialize termcap.", 2);
 		return (1);
 	}
+	disable_echoctl();
 	setup_signals();
 	ht_init_from_env(&map, envp);
 	ht_set(&map, "?", "0");
+	ht_set(&map, "OLDPWD", NULL);
 	while (1)
 	{
 		line = readline("minishell $> ");

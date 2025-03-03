@@ -6,9 +6,7 @@ static int	check_for_dir(char *pwd)
 
 	if (stat(pwd, &st) == 0 && S_ISDIR(st.st_mode))
 		return (0);
-	ft_putstr_fd("minishell: cd: ", 2);
-	ft_putstr_fd(pwd, 2);
-	ft_putendl_fd(": Permission denied", 2);
+	print_error("minishell: cd: ", pwd, ": No such file or directory");
 	return (1);
 }
 
@@ -16,9 +14,7 @@ static int	check_permissions(char *pwd)
 {
 	if (access(pwd, X_OK) == 0)
 		return (0);
-	ft_putstr_fd("minishell: cd: ", 2);
-	ft_putstr_fd(pwd, 2);
-	ft_putendl_fd(": No such file or directory", 2);
+	print_error("minishell: cd: ", pwd, ": Permission denied");
 	return (1);
 }
 
@@ -50,6 +46,7 @@ int	ft_cd(char **args, t_ht *env)
 		pwd = ht_get(env, "OLDPWD");
 		if (!pwd || !*pwd)
 			return (ft_putendl_fd("minishell: cd: OLDPWD not set", 2), 1);
+		printf("%s\n", pwd);
 	}
 	else
 		pwd = *args;

@@ -22,12 +22,7 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 		if (access(cmd, X_OK) == 0)
 			return (cmd);
 		else
-		{
-			ft_putstr_fd("minishell: ", 2);
-			ft_putstr_fd(cmd, 2);
-			ft_putendl_fd(": No such file or directory", 2);
-			return (NULL);
-		}
+			return (print_error("minishell: ", cmd, ": No such file or directory"), NULL);
 	}
 	path = ht_get(env, "PATH");
 	if (!path)
@@ -50,9 +45,7 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 		free(full_path);
 	}
 	free_char_matrix(paths);
-	ft_putstr_fd("minishell: ", 2);
-	ft_putstr_fd(cmd, 2);
-	ft_putendl_fd(": command not found", 2);
+	print_error("minishell: ", cmd, ": command not found");
 	return (NULL);
 }
 
@@ -195,6 +188,13 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 			break ;
 		if (token[i] == '$' && !in_single_quotes)
 		{
+			if (!token[i + 1] || ft_isspace(token[i + 1]))
+			{
+				token_char[0] = token[i];
+				token_char[1] = '\0';
+				append_str(&current, token_char);
+				continue ;
+			}
 			expand_variable(token, &i, &current, env);
 			if (!in_double_quotes)
 			{
@@ -207,6 +207,11 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 				else
 					current = ft_strdup("");
 			}
+		}
+		else if (i == 0 && token[i] == '~' && (token[i + 1] == '/' || token[i + 1] == '\0'))
+		{
+			free(current);
+			current = ft_strdup(ht_get(env, "HOME"));
 		}
 		else if (token[i] == '*' && !in_single_quotes && !in_double_quotes)
 		{
@@ -429,10 +434,11 @@ int	exec_builtin(t_ast *node, t_ht *env)
 
 int	execute_command(t_ast *node, t_ht *env)
 {
-	pid_t		pid;
-	int			status;
-	int			last;
-	t_char_arr	*expanded;
+	pid_t				pid;
+	int					status;
+	int					last;
+	t_char_arr			*expanded;
+	struct sigaction	sa;
 
 	if (is_builtin(node->cmd->name)) 
 		return (exec_builtin(node, env));
@@ -463,7 +469,12 @@ int	execute_command(t_ast *node, t_ht *env)
 	}
 	else
 	{
+		sigemptyset(&sa.sa_mask);
+		sa.sa_handler = SIG_IGN;
+		sigaction(SIGINT, &sa, NULL); 
+		sigaction(SIGQUIT, &sa, NULL); 
 		waitpid(pid, &status, 0);
+		setup_signals();
 		if (WIFEXITED(status))
 			return (WEXITSTATUS(status));
 		return (-1);
@@ -503,11 +514,12 @@ int	execute_pipe_side(t_ast *node, t_ht *env, int pipefd[2], int side)
 
 int	execute_pipe(t_ast *node, t_ht *env)
 {
-	int		pipefd[2];
-	pid_t	left_pid;
-	pid_t	right_pid;
-	int		left_status;
-	int		right_status;
+	int					pipefd[2];
+	pid_t				left_pid;
+	pid_t				right_pid;
+	int					left_status;
+	int					right_status;
+	struct sigaction	sa;
 
 	if (pipe(pipefd))
 		return (perror("minishell"), -1);
@@ -519,8 +531,13 @@ int	execute_pipe(t_ast *node, t_ht *env)
 		return (-1);
 	close(pipefd[0]);
 	close(pipefd[1]);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGINT, &sa, NULL); 
+	sigaction(SIGQUIT, &sa, NULL); 
 	waitpid(left_pid, &left_status, 0);
 	waitpid(right_pid, &right_status, 0);
+	setup_signals();
 	if (WIFEXITED(right_status))
 		return (WEXITSTATUS(right_status));
 	return (-1);
@@ -561,8 +578,9 @@ static int	execute_ast_impl(t_ast *node, t_ht *env)
 
 int	execute_ast(t_ast *node, t_ht *env)
 {
-	pid_t   pid;
-	int	 	status;
+	pid_t   			pid;
+	int	 				status;
+	struct sigaction	sa;
 
 	if (!node)
 		return (0);
@@ -575,7 +593,12 @@ int	execute_ast(t_ast *node, t_ht *env)
 			status = execute_ast_impl(node, env);
 			exit(status);
 		}
+		sigemptyset(&sa.sa_mask);
+		sa.sa_handler = SIG_IGN;
+		sigaction(SIGINT, &sa, NULL);
+		sigaction(SIGQUIT, &sa, NULL);
 		waitpid(pid, &status, 0);
+		setup_signals();
 		if (WIFEXITED(status))
 			return (WEXITSTATUS(status));
 		return (1);
