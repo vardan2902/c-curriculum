@@ -132,35 +132,159 @@ void	expand_variable(const char *token, int *i, char **current, t_ht *env)
 	free(key);
 }
 
-void	expand_wildcard(t_char_arr *result)
+static void init_char_arr(t_char_arr *arr)
 {
-	DIR				*dir;
-	struct dirent	*entry;
+	arr->arr = NULL;
+	arr->size = 0;
+}
 
-	dir = opendir(".");
-	if (dir)
-	{
-		while ((entry = readdir(dir)) != NULL)
-		{
-			if (entry->d_name[0] != '.')
-				append_to_result(result, ft_strdup(entry->d_name));
+static void free_char_arr(t_char_arr *arr)
+{
+	size_t i;
+
+	i = 0;
+	while (i < arr->size)
+		free(arr->arr[i++]);
+	free(arr->arr);
+	arr->arr = NULL;
+	arr->size = 0;
+}
+
+static int is_quoted(const char *token)
+{
+	size_t len;
+	char first;
+
+	if (!token)
+		return (0);
+	len = ft_strlen(token);
+	if (len < 2)
+		return (0);
+	first = token[0];
+	return ((first == '\'' || first == '"') && token[len - 1] == first);
+}
+
+static int match_pattern(const char *pattern, const char *str)
+{
+	while (*pattern && *str) {
+		if (*pattern == '*') {
+			while (*pattern == '*')
+				++pattern;
+			if (!*pattern)
+				return (1);
+			while (*str) {
+				if (match_pattern(pattern, str))
+					return (1);
+				++str;
+			}
+			return (0);
+		} else if (*pattern == *str) {
+			++pattern;
+			++str;
+		} else {
+			return (0);
 		}
-		closedir(dir);
+	}
+	return (*pattern == '\0' && *str == '\0');
+}
+
+static void	sort_strings(char **arr, size_t size)
+{
+	size_t	i;
+	size_t	j;
+	char	*tmp;
+
+	i = 0;
+	while (i < size)
+	{
+		j = 0;
+		while (j < size - i - 1)
+		{
+			if (ft_strcmp(arr[j], arr[j + 1]) > 0)
+			{
+				tmp = arr[j];
+				arr[j] = arr[j + 1];
+				arr[j + 1] = tmp;
+			}
+			++j;
+		}
+		++i;
 	}
 }
 
-static void handle_quotes(const char *token, int *i, bool *in_single_quotes, bool *in_double_quotes)
+void	expand_wildcards(t_char_arr *result)
 {
-	if (token[*i] == '\'' && !(*in_double_quotes))
+	t_char_arr		new_result;
+	size_t			i;
+	char			*token;
+	DIR				*dir;
+	struct dirent	*entry;
+	t_char_arr		matches;
+
+	init_char_arr(&new_result);
+	i = 0;
+	while (i < result->size)
 	{
+		token = result->arr[i];
+		if (is_quoted(token) || !ft_strchr(token, '*'))
+		{
+			append_to_result(&new_result, ft_strdup(token));
+			++i;
+			continue ;
+		}
+		int ends_with_slash = (ft_strlen(token) > 0 && token[ft_strlen(token) - 1] == '/');
+		char *pattern;
+		if (ends_with_slash)
+			pattern = ft_substr(token, 0, ft_strlen(token) - 1);
+		else
+			pattern = ft_strdup(token);
+		dir = opendir(".");
+		if (!dir) {
+			append_to_result(&new_result, ft_strdup(token));
+			ft_free(pattern);
+			i++;
+			continue;
+		}
+		init_char_arr(&matches);
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if (ft_strcmp(entry->d_name, ".") == 0 || ft_strcmp(entry->d_name, "..") == 0)
+				continue ;
+			if (!match_pattern(pattern, entry->d_name))
+				continue ;
+			struct stat st;
+			if (ends_with_slash && (stat(entry->d_name, &st) == -1 || !S_ISDIR(st.st_mode)))
+				continue;
+			char *name;
+			if (ends_with_slash)
+				name = ft_strjoin(entry->d_name, "/");
+			else
+				name = ft_strdup(entry->d_name);
+			append_to_result(&matches, name);
+		}
+		closedir(dir);
+		ft_free(pattern);
+		sort_strings(matches.arr, matches.size);
+		if (matches.size == 0)
+			append_to_result(&new_result, ft_strdup(token));
+		else {
+			size_t j = 0;
+			while (j < matches.size)
+				append_to_result(&new_result, matches.arr[j++]);
+			free(matches.arr);
+		}
+		i++;
+	}
+	free_char_arr(result);
+	*result = new_result;
+}
+
+static void handle_quotes(const char token, bool *in_single_quotes, bool *in_double_quotes)
+{
+	if (token == '\'' && !(*in_double_quotes))
 		*in_single_quotes = !(*in_single_quotes);
-		++(*i);
-	}
-	else if (token[*i] == '"' && !(*in_single_quotes))
-	{
+	else if (token == '"' && !(*in_single_quotes))
 		*in_double_quotes = !(*in_double_quotes);
-		++(*i);
-	}
 }
 
 t_char_arr	*expand_text(const char *token, t_ht *env)
@@ -183,7 +307,7 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 	in_single_quotes = false;
 	while (token[++i])
 	{
-		handle_quotes(token, &i, &in_single_quotes, &in_double_quotes);
+		handle_quotes(token[i], &in_single_quotes, &in_double_quotes);
 		if (!token[i])
 			break ;
 		if (token[i] == '$' && !in_single_quotes)
@@ -207,30 +331,80 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 				else
 					current = ft_strdup("");
 			}
+			continue ;
 		}
-		else if (i == 0 && token[i] == '~' && (token[i + 1] == '/' || token[i + 1] == '\0'))
+		else if (token[i] == '~' && (token[i + 1] == '/' || token[i + 1] == '\0'))
 		{
-			free(current);
-			current = ft_strdup(ht_get(env, "HOME"));
+			if (i == 0)
+			{
+				free(current);
+				current = ft_strdup(ht_get(env, "HOME"));
+				continue ;
+			}
+			else if (token[i - 1] == '=')
+			{
+				char *identifier = ft_substr(current, 0, ft_strlen(current) - 1);
+				if (is_valid_identifier(identifier, 0))
+					append_str(&current, ht_get(env, "HOME"));
+				else
+					append_str(&current, "~");
+				free(identifier);
+				continue ;
+			}
 		}
-		else if (token[i] == '*' && !in_single_quotes && !in_double_quotes)
-		{
-			if (current[0] != '\0')
-				append_to_result(result, current);
-			current = ft_strdup("");
-			expand_wildcard(result);
-		}
-		else
-		{
-			token_char[0] = token[i];
-			token_char[1] = '\0';
-			append_str(&current, token_char);
-		}
+		token_char[0] = token[i];
+		token_char[1] = '\0';
+		append_str(&current, token_char);
 	}
 	if (current[0] != '\0')
 		append_to_result(result, current);
 	i = 0;
 	return (result);
+}
+
+void remove_quotes(t_char_arr *result)
+{
+	size_t i;
+	size_t j;
+	char *token;
+	char *new_token;
+	size_t len;
+	int in_single_quotes;
+	int in_double_quotes;
+
+	i = 0;
+	while (i < result->size)
+	{
+		token = result->arr[i];
+		len = ft_strlen(token);
+		new_token = (char *)malloc((len + 1) * sizeof (char));
+		if (!new_token)
+			continue ;
+		j = 0;
+		in_single_quotes = 0;
+		in_double_quotes = 0;
+		size_t new_len = 0;
+
+		while (j < len)
+		{
+			if (token[j] == '\'' && !in_double_quotes)
+			{
+				in_single_quotes = !in_single_quotes;
+				j++;
+			}
+			else if (token[j] == '"' && !in_single_quotes)
+			{
+				in_double_quotes = !in_double_quotes;
+				j++;
+			}
+			else
+				new_token[new_len++] = token[j++];
+		}
+		new_token[new_len] = '\0';
+		ft_free(result->arr[i]);
+		result->arr[i] = new_token;
+		i++;
+	}
 }
 
 int	handle_redirections(t_list *redir_lst, t_ht *env)
@@ -309,10 +483,16 @@ char	*get_lower_cmd(const char *cmd)
 
 bool is_builtin(const char *cmd)
 {
-	char	*lower_cmd;
-	bool	builtin;
+	char		*lower_cmd;
+	bool		builtin;
+	t_char_arr	expanded;
 
-	lower_cmd = get_lower_cmd(cmd);
+	lower_cmd = ft_strdup(cmd);
+	init_char_arr(&expanded);
+	expanded.size = 1;
+	expanded.arr = &lower_cmd;
+	remove_quotes(&expanded);
+	lower_cmd = get_lower_cmd(*expanded.arr);
 	if (!lower_cmd)
 		return (false);
 	builtin = (!ft_strcmp(lower_cmd, "echo") || !ft_strcmp(lower_cmd, "cd")
@@ -335,6 +515,8 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	expanded = expand_text(node->cmd->name, env);
 	if (!expanded || !expanded->size)
 		return ;
+	expand_wildcards(expanded);
+	remove_quotes(expanded);
 	cmd_path = build_cmd_path(*(expanded->arr), env);
 	if (!cmd_path)
 		exit(127);
@@ -349,6 +531,8 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 		free(node->cmd->args[i]);
 		if (!expanded)
 			return ;
+		expand_wildcards(expanded);
+		remove_quotes(expanded);
 		j = -1;
 		while (++j < expanded->size)
 			append_to_result(args, expanded->arr[j]);
@@ -406,6 +590,8 @@ int	exec_builtin(t_ast *node, t_ht *env)
 	expanded = expand_text(node->cmd->name, env);
 	if (!expanded || !expanded->size)
 		return (127);
+	expand_wildcards(expanded);
+	remove_quotes(expanded);
 	i = -1;
 	while (++i < expanded->size)
 		append_to_result(args, expanded->arr[i]);
@@ -413,6 +599,9 @@ int	exec_builtin(t_ast *node, t_ht *env)
 	while (node->cmd->args[++i])
 	{
 		expanded = expand_text(node->cmd->args[i], env);
+		if (ft_strcmp(get_lower_cmd(args->arr[0]), "export"))
+			expand_wildcards(expanded);
+		remove_quotes(expanded);
 		free(node->cmd->args[i]);
 		if (!expanded)
 			return (127);
