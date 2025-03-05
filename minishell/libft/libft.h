@@ -6,7 +6,7 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/08 15:39:30 by vapetros          #+#    #+#             */
-/*   Updated: 2025/02/27 16:27:55 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/03/05 14:33:04 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ int				ft_isascii(int c);
 int				ft_isalpha(int c);
 int				ft_isprint(int c);
 int				ft_isspace(int c);
+int				ft_isquote(int c);
 int				ft_toupper(int c);
 int				ft_tolower(int c);
 int				ft_atoi(const char *str);

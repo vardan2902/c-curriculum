@@ -14,7 +14,7 @@ SRC			=	ft_atoi.c			ft_memset.c			ft_strlcpy.c		ft_bzero.c			\
 				ft_lstclear.c		ft_lstlast.c		ft_lstsize.c		ft_printf.c			\
 				parse_utils.c		print_char.c		print_decimal.c		print_hex.c			\
 			 	print_utils.c  		padding_utils.c		print_udecimal.c	ft_strcmp.c			\
-				ft_isspace.c		ft_putchar.c
+				ft_isspace.c		ft_putchar.c		ft_isquote.c
 OBJ			=	$(SRC:.c=.o)
 BONUS_OBJ	=	$(BONUS_SRC:.c=.o)
 

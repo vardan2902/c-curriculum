@@ -51,7 +51,7 @@ int	main(int argc, char *argv[], char *envp[])
 		ft_putendl_fd("Could not initialize termcap.", 2);
 		return (1);
 	}
-	disable_echoctl();
+//	disable_echoctl();
 	setup_signals();
 	ht_init_from_env(&map, envp);
 	ht_set(&map, "?", "0");
@@ -78,8 +78,12 @@ int	main(int argc, char *argv[], char *envp[])
 			continue ;
 		ast = ast_create_from_tokens(&token_lst, 0);
 		if (!ast)
+		{
+			ht_set(&map, "?", "2");
 			continue ;
-		execute_ast(ast, &map);
+		}
+		char *status = ft_itoa((unsigned char)execute_ast(ast, &map));
+		ht_set(&map, "?", status);
 	}
 	rl_clear_history();
 	return (0);

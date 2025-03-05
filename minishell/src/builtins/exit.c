@@ -19,7 +19,7 @@ int	check_int_limit(const char *str)
 	{
 		seen = 1;
 		prev_num = num;
-		num = num * 10 + str[i++] - '0';
+		num = num * 10 + (sign * (str[i++] - '0'));
 		if ((sign == 1 && num < prev_num) || (sign == -1 && num > prev_num))
 			return (0);
 	}

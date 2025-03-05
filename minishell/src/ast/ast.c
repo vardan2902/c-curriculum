@@ -20,8 +20,10 @@ static int ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev)
 		if (*token_lst)
 			token = (t_token *)(*token_lst)->content;
 		free(token_it);
-		if (!*token_lst || token->type != T_WORD)
+		if (!*token_lst)
 			return (print_syntax_error("newline"), free(redir), 0);
+		if (token->type != T_WORD)
+			return (print_syntax_error(token->value), free(redir), 0);
 		redir->target = ((t_token *)(*token_lst)->content)->value;
 		token_it = *token_lst;
 		*token_lst = (*token_lst)->next;

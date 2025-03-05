@@ -10,26 +10,49 @@ static void	free_char_matrix(char **matrix)
 	free(matrix);
 }
 
-static char	*build_cmd_path(char *cmd, t_ht *env)
+static char	*build_cmd_path(char *cmd, t_ht *env, int *status)
 {
-	int		i;
-	char	**paths;
-	char	*full_path;
-	char	*path;
+	int			i;
+	char		**paths;
+	char		*full_path;
+	char		*path;
+	struct stat	st;;
 
 	if (ft_strchr(cmd, '/'))
 	{
-		if (access(cmd, X_OK) == 0)
+		if (access(cmd, F_OK) == -1)
+		{	
+			print_error("minishell: ", cmd, ": No such file or directory");
+			*status = 127;
+			return (NULL);
+		}
+		else if (stat(cmd, &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			print_error("minishell: ", cmd, ": is a directory");
+			*status = 126;
+			return (NULL);
+		}
+		else if (access(cmd, X_OK) == 0)
 			return (cmd);
 		else
-			return (print_error("minishell: ", cmd, ": No such file or directory"), NULL);
+		{
+			print_error("minishell: ", cmd, ": Permission denied");
+			*status = 126;
+			return (NULL);
+		}
 	}
 	path = ht_get(env, "PATH");
 	if (!path)
+	{
+		*status = 127;
 		return (NULL);
+	}
 	paths = ft_split(path, ':');
 	if (!paths)
+	{
+		*status = 127;
 		return (NULL);
+	}
 	i = -1;
 	while (paths[++i])
 	{
@@ -46,6 +69,7 @@ static char	*build_cmd_path(char *cmd, t_ht *env)
 	}
 	free_char_matrix(paths);
 	print_error("minishell: ", cmd, ": command not found");
+	*status = 127;
 	return (NULL);
 }
 
@@ -312,7 +336,7 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 			break ;
 		if (token[i] == '$' && !in_single_quotes)
 		{
-			if (!token[i + 1] || ft_isspace(token[i + 1]))
+			if (!token[i + 1] || ft_isspace(token[i + 1]) || ft_isquote(token[i + 1]))
 			{
 				token_char[0] = token[i];
 				token_char[1] = '\0';
@@ -510,6 +534,7 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	char		*cmd_path;
 	t_char_arr	*expanded;
 	t_char_arr	*args;
+	int			status;
 
 	args = (t_char_arr *)ft_calloc(1, sizeof (t_char_arr));
 	expanded = expand_text(node->cmd->name, env);
@@ -517,9 +542,9 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 		return ;
 	expand_wildcards(expanded);
 	remove_quotes(expanded);
-	cmd_path = build_cmd_path(*(expanded->arr), env);
+	cmd_path = build_cmd_path(*(expanded->arr), env, &status);
 	if (!cmd_path)
-		exit(127);
+		exit(status);
 	ht_set(env, "_", cmd_path);
 	i = -1;
 	while (++i < expanded->size)
@@ -629,6 +654,21 @@ int	execute_command(t_ast *node, t_ht *env)
 	t_char_arr			*expanded;
 	struct sigaction	sa;
 
+	expanded = NULL;
+	while (!expanded)
+	{
+		expanded = expand_text(node->cmd->name, env);
+		if (!expanded->arr)
+		{
+			last = 0;
+			while (node->cmd->args[last])
+				++last;
+			if (last <= 1)
+				return (0);
+			node->cmd->name = node->cmd->args[1];
+			node->cmd->args += 1;
+		}
+	}
 	if (is_builtin(node->cmd->name)) 
 		return (exec_builtin(node, env));
 	last = 0;
@@ -729,7 +769,7 @@ int	execute_pipe(t_ast *node, t_ht *env)
 	setup_signals();
 	if (WIFEXITED(right_status))
 		return (WEXITSTATUS(right_status));
-	return (-1);
+	return (0);
 }
 
 static int	execute_ast_impl(t_ast *node, t_ht *env)
