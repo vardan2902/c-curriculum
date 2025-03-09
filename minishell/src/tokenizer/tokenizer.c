@@ -49,6 +49,8 @@ t_token	*get_operator_token(char **prompt)
 		return (++(*prompt), create_token(ft_strdup("("), T_OPEN_PARENTHESIS));
 	if (**prompt == ')')
 		return (++(*prompt), create_token(ft_strdup(")"), T_CLOSE_PARENTHESIS));
+	if (**prompt == '&' || **prompt == ';')
+		return (++(*prompt), create_token(ft_substr(*prompt - 1, 0, 1), T_UNHANDLED));
 	return (NULL);
 }
 
@@ -80,7 +82,7 @@ t_token	*get_next_token(char **prompt)
 		return (token);
 	if (**prompt == '&')
 		return (NULL);
-	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&|<># \t\r\v\f\n", **prompt))
+	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&;|<> \t\r\v\f\n", **prompt))
 	{
 		if (**prompt == '"' || **prompt == '\'')
 		{

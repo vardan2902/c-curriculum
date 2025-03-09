@@ -92,7 +92,11 @@ int	is_valid_identifier(const char *identifier, int from_export)
 		if (!ft_isalnum(identifier[i]) && identifier[i] != '_')
 		{
 			if (from_export)
+			{
+				if (i != 0 && identifier[i] == '+' && identifier[i + 1] == '=')
+					continue ;
 		   		print_error("minishell: export: `", identifier, "': not a valid identifier");
+			}
 			return (0);
 		}
 	}
@@ -104,15 +108,28 @@ void	export_new_env(char *token, t_ht *env)
 	char	*eq;
 	char	*key;
 	char	*value;
+	char	*prev_value;
 
 	eq = ft_strchr(token, '=');
 	if (eq)
 	{
-		key = ft_substr(token, 0, eq - token);
-		value = ft_substr(eq + 1, 0, ft_strlen(eq + 1));
+		if (*(eq - 1) == '+')
+		{
+			key = ft_substr(token, 0, eq - token - 1);
+			prev_value = ht_get(env, key);
+			if (!prev_value)
+				prev_value = ft_strdup("");
+			value = ft_strjoin(prev_value, eq + 1);
+			free(prev_value);
+		}
+		else
+		{
+			key = ft_substr(token, 0, eq - token);
+			value = ft_substr(eq + 1, 0, ft_strlen(eq + 1));
+		}
 		ht_set(env, key, value);
 	}
-	else
+	else if (!ht_get(env, token))
 		ht_set(env, ft_strdup(token), NULL);
 }
 

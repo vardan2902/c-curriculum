@@ -138,6 +138,12 @@ void	ht_init_from_env(t_ht *map, char **envp)
 		key_len = equal - envp[i];
 		key = ft_substr(envp[i], 0, key_len);
 		value = ft_substr(equal + 1, 0, ft_strlen(equal + 1));
+		if (!ft_strcmp("SHLVL", key))
+		{
+			int	new_val = ft_atoi(value);
+			free(value);
+			value = ft_itoa(new_val + 1);
+		}
 		ht_set(map, key, value);
 	}
 }

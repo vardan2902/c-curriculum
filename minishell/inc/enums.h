@@ -21,6 +21,7 @@ enum e_cmd_token_types
 	T_OR,
 	T_OPEN_PARENTHESIS,
 	T_CLOSE_PARENTHESIS,
+	T_UNHANDLED,
 };
 
 enum e_quoting_state

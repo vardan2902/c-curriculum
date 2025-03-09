@@ -12,6 +12,7 @@
 # include <dirent.h>
 # include <limits.h>
 # include <sys/stat.h>
+# include <sys/errno.h>
 
 # include "enums.h"
 # include "libft.h"

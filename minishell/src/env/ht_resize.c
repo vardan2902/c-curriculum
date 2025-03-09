@@ -49,7 +49,12 @@ void	get_next_entry(t_ht_node *node, char **matrix, size_t *j)
 
 	while (node)
 	{
-		if (ft_strchr("#?", node->key[0]))
+		if (node->key && ft_strchr("#?", node->key[0]))
+		{
+			node = node->next;
+			continue ;
+		}
+		if (!node->key || !node->value)
 		{
 			node = node->next;
 			continue ;
@@ -70,20 +75,17 @@ char	**ht_to_matrix(t_ht *map)
 {
 	char	**matrix;
 	size_t  i;
-	size_t  j = 0;
-	size_t  total = map->num_elements;
+	size_t  j;
 	
-	matrix = malloc((total + 1) * sizeof(char *));
+	matrix = (char **)malloc((map->num_elements + 1) * sizeof(char *));
 	if (!matrix)
-	{
-		perror("malloc");
-		return	(NULL);
-	}
+		return (perror("malloc"), NULL);
 	i = -1;
+	j = 0;
 	while (++i < map->size)
 		get_next_entry(map->table[i], matrix, &j);
 	matrix[j] = NULL;
-	return matrix;
+	return (matrix);
 }
 
 void free_matrix(char **matrix)

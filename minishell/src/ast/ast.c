@@ -121,9 +121,10 @@ static t_ast	*ast_add_logical_operator(t_ast **root, t_list **token_lst)
 	int		 new_op_prec;
 	int		 root_op_prec;
 
-	if (!*root || (*root)->token == T_NONE || ((*root)->token != T_CMD
+	if (((t_token *)(*token_lst)->content)->type == T_UNHANDLED
+		|| ((!*root || (*root)->token == T_NONE || ((*root)->token != T_CMD
 		&& ((*root)->left->token == T_NONE || (*root)->right->token == T_NONE))
-		|| !(*token_lst)->next)
+		|| !(*token_lst)->next)))
 	{
 		print_syntax_error(((t_token *)(*token_lst)->content)->value);
 		return (NULL);
@@ -202,7 +203,7 @@ t_ast	*ast_create_from_tokens(t_list **token_lst, int indent)
 		if ((token->type == T_WORD || (token->type >= T_INPUT && token->type <= T_HEREDOC))
 				&& !ast_add_cmd(ast, token_lst))
 			return (NULL);
-		else if (token->type == T_OR || token->type == T_AND || token->type == T_PIPE)
+		else if (token->type == T_OR || token->type == T_AND || token->type == T_PIPE || token->type == T_UNHANDLED)
 		{
 			if (!ast_add_logical_operator(&ast, token_lst))
 				return (NULL);

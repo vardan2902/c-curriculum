@@ -80,6 +80,51 @@ void	*ft_free(void *ptr)
 	return (NULL);
 }
 
+void remove_quotes(t_char_arr *result)
+{
+	size_t i;
+	size_t j;
+	char *token;
+	char *new_token;
+	size_t len;
+	int in_single_quotes;
+	int in_double_quotes;
+
+	i = 0;
+	while (i < result->size)
+	{
+		token = result->arr[i];
+		len = ft_strlen(token);
+		new_token = (char *)malloc((len + 1) * sizeof (char));
+		if (!new_token)
+			continue ;
+		j = 0;
+		in_single_quotes = 0;
+		in_double_quotes = 0;
+		size_t new_len = 0;
+
+		while (j < len)
+		{
+			if (token[j] == '\'' && !in_double_quotes)
+			{
+				in_single_quotes = !in_single_quotes;
+				j++;
+			}
+			else if (token[j] == '"' && !in_single_quotes)
+			{
+				in_double_quotes = !in_double_quotes;
+				j++;
+			}
+			else
+				new_token[new_len++] = token[j++];
+		}
+		new_token[new_len] = '\0';
+		ft_free(result->arr[i]);
+		result->arr[i] = new_token;
+		i++;
+	}
+}
+
 void	append_to_result(t_char_arr *arr, char *new_item)
 {
 	char	**tmp;
@@ -386,51 +431,6 @@ t_char_arr	*expand_text(const char *token, t_ht *env)
 	return (result);
 }
 
-void remove_quotes(t_char_arr *result)
-{
-	size_t i;
-	size_t j;
-	char *token;
-	char *new_token;
-	size_t len;
-	int in_single_quotes;
-	int in_double_quotes;
-
-	i = 0;
-	while (i < result->size)
-	{
-		token = result->arr[i];
-		len = ft_strlen(token);
-		new_token = (char *)malloc((len + 1) * sizeof (char));
-		if (!new_token)
-			continue ;
-		j = 0;
-		in_single_quotes = 0;
-		in_double_quotes = 0;
-		size_t new_len = 0;
-
-		while (j < len)
-		{
-			if (token[j] == '\'' && !in_double_quotes)
-			{
-				in_single_quotes = !in_single_quotes;
-				j++;
-			}
-			else if (token[j] == '"' && !in_single_quotes)
-			{
-				in_double_quotes = !in_double_quotes;
-				j++;
-			}
-			else
-				new_token[new_len++] = token[j++];
-		}
-		new_token[new_len] = '\0';
-		ft_free(result->arr[i]);
-		result->arr[i] = new_token;
-		i++;
-	}
-}
-
 int	handle_redirections(t_list *redir_lst, t_ht *env)
 {
 	int				fd;
@@ -442,6 +442,8 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 	{
 		redir = (t_redirection *)redir_lst->content;
 		target = expand_text(redir->target, env);
+		expand_wildcards(target);
+		remove_quotes(target);
 		if (!target || !target->arr || !*target->arr || !**target->arr)
 			return (1);
 		if (redir->type == T_INPUT)
@@ -474,11 +476,18 @@ int	handle_redirections(t_list *redir_lst, t_ht *env)
 		}
 		else if (fd != -1 && (redir->type == T_APPEND || redir->type == T_OUTPUT))
 			dup2(fd, STDOUT_FILENO);
+		if (fd < 0)
+		{
+			char *err = ft_strjoin(": ", strerror(errno));
+			print_error("minishell: ", *target->arr, err);
+			free(target->arr);
+			free(target);
+			free(err);
+			return (1);
+		}
 		free(target->arr);
 		free(target);
 		target = NULL;
-		if (fd < 0)
-			return (1);
 		close(fd);
 		unlink(".heredoc");
 		redir_lst = redir_lst->next;
@@ -606,9 +615,10 @@ int	exec_builtin(t_ast *node, t_ht *env)
 
 	saved_stdin = dup(STDIN_FILENO);
 	saved_stdout = dup(STDOUT_FILENO);
-	if (handle_redirections(node->cmd->redirections, env) != 0) 
+	if (handle_redirections(node->cmd->redirections, env) != 0)
 	{
-		perror("minishell");
+		dup2(saved_stdin, STDIN_FILENO);
+		dup2(saved_stdout, STDOUT_FILENO);
 		return (1);
 	}
 	args = (t_char_arr *)ft_calloc(1, sizeof (t_char_arr));
@@ -683,18 +693,15 @@ int	execute_command(t_ast *node, t_ht *env)
 	if (pid == 0)
 	{
 		if (handle_redirections(node->cmd->redirections, env))
-		{
-			perror("minishell");
 			exit(1);
-		}
 		if (node->token == T_CMD)
 			exec_non_builtin(node, env);
 		exit(0);
 	}
 	else if (pid < 0)
 	{
-		perror("minishell");
-		return -1;
+		perror("minishell: fork");
+		return (-1);
 	}
 	else
 	{
@@ -735,8 +742,8 @@ int	execute_pipe_side(t_ast *node, t_ht *env, int pipefd[2], int side)
 	{
 		close(pipefd[0]);
 		close(pipefd[1]);
-		perror("minishell");
-		return -1;
+		perror("minishell: fork");
+		return (-1);
 	}
 	return (pid);
 }
@@ -757,7 +764,10 @@ int	execute_pipe(t_ast *node, t_ht *env)
 		return (-1);
 	right_pid = execute_pipe_side(node->right, env, pipefd, 1);
 	if (right_pid < 0)
+	{
+		kill(left_pid, SIGKILL);
 		return (-1);
+	}
 	close(pipefd[0]);
 	close(pipefd[1]);
 	sigemptyset(&sa.sa_mask);
@@ -822,6 +832,8 @@ int	execute_ast(t_ast *node, t_ht *env)
 			status = execute_ast_impl(node, env);
 			exit(status);
 		}
+		if (pid < 0)
+			return (1);
 		sigemptyset(&sa.sa_mask);
 		sa.sa_handler = SIG_IGN;
 		sigaction(SIGINT, &sa, NULL);
