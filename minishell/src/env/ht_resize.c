@@ -43,52 +43,7 @@ void	rehash_nodes(t_ht *map, t_ht_node **new_table, size_t new_size)
 	}
 }
 
-void	get_next_entry(t_ht_node *node, char **matrix, size_t *j)
-{
-	char	*tmp;
-
-	while (node)
-	{
-		if (node->key && ft_strchr("#?", node->key[0]))
-		{
-			node = node->next;
-			continue ;
-		}
-		if (!node->key || !node->value)
-		{
-			node = node->next;
-			continue ;
-		}
-		tmp = ft_strjoin(node->key, "=");
-		if (!tmp)
-			return ;
-		matrix[*j] = ft_strjoin(tmp, node->value);
-		free(tmp);
-		if (!matrix[*j])
-			return ;
-		++(*j);
-		node = node->next;
-	}
-}
-
-char	**ht_to_matrix(t_ht *map)
-{
-	char	**matrix;
-	size_t  i;
-	size_t  j;
-	
-	matrix = (char **)malloc((map->num_elements + 1) * sizeof(char *));
-	if (!matrix)
-		return (perror("malloc"), NULL);
-	i = -1;
-	j = 0;
-	while (++i < map->size)
-		get_next_entry(map->table[i], matrix, &j);
-	matrix[j] = NULL;
-	return (matrix);
-}
-
-void free_matrix(char **matrix)
+void	free_matrix(char **matrix)
 {
 	size_t	i;
 

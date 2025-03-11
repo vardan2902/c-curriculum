@@ -8,8 +8,10 @@ LINKERS			=	-L$(LIBFT_DIR) -lft -L$(READLINE_DIR) -lreadline -ltermcap
 CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address
 OBJ_DIR			=	obj
 SRC_DIR			=	src
-SRC_FILES		=	main.c ast/ast.c ast/exec.c env/ht.c env/ht_resize.c tokenizer/tokenizer.c \
-					print/utils.c builtins/echo.c builtins/pwd.c builtins/cd.c builtins/unset.c builtins/exit.c builtins/env.c builtins/export.c
+SRC_FILES		=	main.c ast/ast.c ast/exec.c env/ht.c env/ht_resize.c env/ht_utils.c tokenizer/tokenizer.c \
+					utils/print.c builtins/echo.c builtins/pwd.c builtins/cd.c builtins/unset.c env/ht_hash_utils.c \
+					builtins/exit.c builtins/env.c builtins/export.c utils/signals.c utils/validations.c \
+					tokenizer/tokenization_utils.c
 SRCS			=	$(addprefix $(SRC_DIR)/, $(SRC_FILES))
 OBJS			=	$(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 LIBFT			=	$(LIBFT_DIR)/libft.a
