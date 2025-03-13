@@ -71,7 +71,8 @@ static void	get_next_entry(t_ht_node *node, char ***entries, size_t *j)
 {
 	while (node)
 	{
-		if (node->key && ft_strchr("#?", node->key[0]))
+		if (node->key && (ft_strchr("#?", node->key[0])
+				|| ft_isdigit(node->key[0])))
 		{
 			node = node->next;
 			continue ;

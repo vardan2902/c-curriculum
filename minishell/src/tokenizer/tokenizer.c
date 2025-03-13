@@ -14,15 +14,13 @@ t_token	*get_next_token(char **prompt)
 		return (token);
 	if (**prompt == '&')
 		return (NULL);
-	while (**prompt && !ft_isspace(**prompt) && !ft_strchr("()&;|<> \t\r\v\f\n", **prompt))
+	while (**prompt && !ft_isspace(**prompt)
+		&& !ft_strchr("()&;|<> \t\r\v\f\n", **prompt))
 	{
-		if (**prompt == '"' || **prompt == '\'')
-		{
-		   if (!tokenizer_handle_quotes(prompt, **prompt))
-			   return (NULL);
-		}
-		else
+		if (!ft_isquote(**prompt))
 			++(*prompt);
+		else if (!tokenizer_handle_quotes(prompt, **prompt))
+			return (NULL);
 	}
 	value = ft_substr(start, 0, *prompt - start);
 	if (!value)
@@ -40,20 +38,18 @@ t_list	*get_token_lst(char *prompt)
 	while (*prompt)
 	{
 		skip_whitespaces(&prompt);
-		if (!*prompt)
-			break ;
 		if (*prompt == '#')
-		{
 			while (*prompt)
 				++prompt;
+		if (!*prompt)
 			break ;
-		}
 		token = get_next_token(&prompt);
 		if (!token)
 			return (ft_lstclear(&token_lst, &del_token), NULL);
 		new_node = ft_lstnew(token);
 		if (!new_node)
-			return (ft_lstclear(&token_lst, &del_token), del_token((void *)token), NULL);
+			return (ft_lstclear(&token_lst, &del_token),
+				del_token((void *)token), NULL);
 		ft_lstadd_back(&token_lst, new_node);
 	}
 	return (token_lst);

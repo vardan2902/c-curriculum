@@ -8,5 +8,7 @@ int			is_valid_identifier(const char *str, int from_export);
 void		handle_sigint(int signum);
 void		setup_signals(void);
 void		print_env(t_ht *env, int is_declare_list);
+void		save_std_fds(int *saved_stdin, int *saved_stdout);
+void		restore_std_fds(int saved_stdin, int saved_stdout);
 
 #endif

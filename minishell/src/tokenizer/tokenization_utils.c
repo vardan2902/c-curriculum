@@ -50,7 +50,8 @@ t_token	*get_operator_token(char **prompt)
 	if (**prompt == ')')
 		return (++(*prompt), create_token(ft_strdup(")"), T_CLOSE_PARENTHESIS));
 	if (**prompt == '&' || **prompt == ';')
-		return (++(*prompt), create_token(ft_substr(*prompt - 1, 0, 1), T_UNHANDLED));
+		return (++(*prompt), create_token(ft_substr(*prompt - 1, 0, 1),
+				T_UNHANDLED));
 	return (NULL);
 }
 

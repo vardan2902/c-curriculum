@@ -53,7 +53,7 @@ int	ft_exit(char **args, t_ht *env)
 	(void)env;
 	i = 0;
 	args += 1;
-	if (!ht_get(env, "#IS_SUBSHELL"))
+	if (!ht_get(env, "#IS_SUBSHELL") && !ht_get(env, "#ISNOTATTY"))
 		ft_putendl_fd("exit", 1);
 	while (args[i])
 		++i;
