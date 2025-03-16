@@ -6,11 +6,11 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/18 21:47:07 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/28 16:20:29 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/01/28 16:24:55 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 static void	*clear_storage(char *storage)
 {
@@ -70,17 +70,17 @@ static char	*update_storage(char *storage)
 
 char	*get_next_line(int fd)
 {
-	static char	*storage;
+	static char	*storage[FOPEN_MAX + 1];
 	char		*line;
 
 	if (fd < 0 || fd > FOPEN_MAX || BUFFER_SIZE <= 0)
 		return (NULL);
-	storage = read_line(fd, storage);
-	if (!storage)
+	storage[fd] = read_line(fd, storage[fd]);
+	if (!storage[fd])
 		return (NULL);
-	line = extract_line(storage);
+	line = extract_line(storage[fd]);
 	if (!line)
-		return (storage = clear_storage(storage));
-	storage = update_storage(storage);
+		return (storage[fd] = clear_storage(storage[fd]));
+	storage[fd] = update_storage(storage[fd]);
 	return (line);
 }

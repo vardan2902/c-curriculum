@@ -11,7 +11,7 @@ static int	check_for_flag(char **args)
 	while (args[++i])
 	{
 		j = 0;
-		if (args[i][j] != '-')
+		if (args[i][j] != '-' || args[i][j + 1] != 'n')
 			break ;
 		while (args[i][++j] == 'n')
 			continue ;

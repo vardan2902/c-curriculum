@@ -74,18 +74,20 @@ static int	is_wildcard_token(const char *token)
 	int	i;
 	int	j;
 
-	i = -1;
-	while (token[++i])
+	i = 0;
+	while (token[i])
 	{
 		if (ft_isquote(token[i]))
 		{
 			j = i + 1;
-			while (token[j] != token[i])
+			while (token[j] && token[j] != token[i])
 				++j;
 			i = j;
 		}
 		else if (token[i] == '*')
 			return (1);
+		if (token[i])
+			++i;
 	}
 	return (0);
 }

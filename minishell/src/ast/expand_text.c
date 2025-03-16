@@ -25,38 +25,9 @@ static t_char_arr	*init_expansion(char **current)
 	return (result);
 }
 
-static void	process_dollar(const char *token, int *i, char **current, t_ht *env)
+static void	update_current_after_split(t_char_arr *result, char **current, int last_space)
 {
-	char	str[2];
-
-	if (!token[*i + 1] || ft_isspace(token[*i + 1]))
-	{
-		str[0] = token[*i];
-		str[1] = '\0';
-		append_str(current, str);
-	}
-	else
-		expand_variable(token, i, current, env);
-}
-
-static void	process_quoted_dollar(const char *token, int *i, char **current, t_ht *env)
-{
-	char	str[2];
-
-	if (!token[*i + 1] || ft_isspace(token[*i + 1])
-		|| ft_isquote(token[*i + 1]))
-	{
-		str[0] = token[*i];
-		str[1] = '\0';
-		append_str(current, str);
-	}
-	else
-		expand_variable(token, i, current, env);
-}
-
-static void	update_current_after_split(t_char_arr *result, char **current)
-{
-	if (result->size > 0)
+	if (result->size > 0 && !last_space)
 	{
 		free(*current);
 		*current = result->arr[result->size - 1];
@@ -99,10 +70,20 @@ static void	handle_regular_char(char token_char, char **current)
 	append_str(current, str);
 }
 
-static void	split_and_update(char **current, t_char_arr *result)
+static void	split_and_update(char **current, t_char_arr *result, int last_space)
 {
 	split_and_append(result, *current);
-	update_current_after_split(result, current);
+	update_current_after_split(result, current, last_space);
+}
+
+static int	is_last_space(char *str)
+{
+	int	len;
+
+	len = ft_strlen(str);
+	if (len > 0)
+		return (ft_isspace(str[len - 1]));
+	return (0);
 }
 
 static void	expand_symbols(const char *token, char **current,
@@ -110,6 +91,8 @@ static void	expand_symbols(const char *token, char **current,
 {
 	bool	in_single;
 	bool	in_double;
+	char	*var_key;
+	char	*var_value;
 	int		i;
 
 	in_single = false;
@@ -122,13 +105,26 @@ static void	expand_symbols(const char *token, char **current,
 			break ;
 		if (token[i] == '$' && !in_single)
 		{
-			if (in_double)
-				process_quoted_dollar(token, &i, current, env);
-			if (!in_double)
+			char	str[2];
+			
+			if (!token[i + 1] || ft_isspace(token[i + 1])
+				|| (in_double && ft_isquote(token[i + 1])))
 			{
-				process_dollar(token, &i, current, env);
-				split_and_update(current, result);
+				str[0] = token[i];
+				str[1] = '\0';
+				append_str(current, str);
+				continue ;
 			}
+			var_key = extract_var_name(token, &i);
+			if (!var_key)
+				continue ;
+			var_value = ht_get(env, var_key);
+			free (var_key);
+			if (!var_value)
+				continue ;
+			append_str(current, var_value);
+			if (!in_double)
+				split_and_update(current, result, is_last_space(var_value));
 		}
 		else if (token[i] == '~' && (token[i + 1] == '/' || !token[i + 1]))
 			handle_tilde_expansion(token, i, current, env);

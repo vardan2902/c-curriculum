@@ -4,7 +4,7 @@ static int	check_var_name(char *name)
 {
 	int	i;
 
-	if (!name || ft_isdigit(name[0]))
+	if (!name || name[0] == '\0' || ft_isspace(name[0]) || ft_isdigit(name[0]))
 		return (1);
 	i = 0;
 	while (name[i] && (ft_isalnum(name[i]) || name[i] == '_'))

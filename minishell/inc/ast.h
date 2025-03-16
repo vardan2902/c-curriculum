@@ -49,13 +49,13 @@ int			ast_add_cmd(t_ast *it, t_list **token_lst);
 int			handle_redirections_and_restore(t_list *redirections,
 			t_ht *env, int saved_stdin, int saved_stdout);
 int			exec_builtin(t_ast *node, t_ht *env);
-void		expand_variable(const char *token, int *i, char **current, t_ht *env);
+char		*extract_var_name(const char *token, int *i);
 char		*get_lower_cmd(const char *cmd);
 t_char_arr	*expand_text(const char *token, t_ht *env);
 void		expand_wildcards(t_char_arr *result);
 void		remove_quotes(t_char_arr *result);
 void		append_to_result(t_char_arr *arr, char *new_item);
-int			handle_redirections(t_list *redir_lst, t_ht *env);
+int			handle_redirections(t_list *redir_lst, t_ht *env, int saved_stdin);
 
 void		append_str(char **result, const char *str);
 

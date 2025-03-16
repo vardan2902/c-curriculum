@@ -2,7 +2,13 @@
 
 int	ft_env(char **args, t_ht *env)
 {
-	(void)args;
+	int	i;
+
+	i = 0;
+	while (args[i])
+		++i;
+	if (i > 1)
+		return (1);
 	print_env(env, 0);
 	return (0);
 }

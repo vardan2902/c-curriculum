@@ -1,9 +1,9 @@
 #include "minishell.h"
 
-static int	is_first_symbol_invalid(int is_first, const char *identifier,
+static int	is_first_symbol_invalid(const char *identifier,
 	int c, int from_export)
 {
-	if (is_first && (!ft_isalpha(c) && c != '_'))
+	if ((!ft_isalpha(c) && c != '_'))
 	{
 		if (from_export)
 			print_error("minishell: export: `", identifier,
@@ -13,14 +13,14 @@ static int	is_first_symbol_invalid(int is_first, const char *identifier,
 	return (0);
 }
 
-static int	is_symbol_invalid(int is_first, const char *identifier,
-	int c, int from_export)
+static int	is_symbol_invalid(const char *identifier,
+	int i, int from_export)
 {
-	if (!ft_isalnum(c) && c != '_')
+	if (!ft_isalnum(identifier[i]) && identifier[i] != '_')
 	{
 		if (from_export)
 		{
-			if (!is_first && c == '+' && c == '=')
+			if (identifier[i] == '+' && identifier[i + 1] == '=')
 				return (0);
 			print_error("minishell: export: `", identifier,
 				"': not a valid identifier");
@@ -37,12 +37,12 @@ int	is_valid_identifier(const char *identifier, int from_export)
 	i = -1;
 	while (identifier[++i])
 	{
-		if (is_first_symbol_invalid(i == 0, identifier, identifier[i],
+		if (i == 0 && is_first_symbol_invalid(identifier, identifier[i],
 				from_export))
 			return (0);
 		if (identifier[i] == '=')
 			break ;
-		if (is_symbol_invalid(i == 0, identifier, identifier[i], from_export))
+		if (i != 0 && is_symbol_invalid(identifier, i, from_export))
 			return (0);
 	}
 	return (1);

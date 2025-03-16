@@ -1,6 +1,6 @@
 #include "minishell.h"
 
-static char	*extract_var_name(const char *token, int *i)
+char	*extract_var_name(const char *token, int *i)
 {
 	int		start;
 	int		len;
@@ -21,18 +21,4 @@ static char	*extract_var_name(const char *token, int *i)
 		return (NULL);
 	*i = start + len - 1;
 	return (var_name);
-}
-
-void	expand_variable(const char *token, int *i, char **current, t_ht *env)
-{
-	char	*key;
-	char	*value;
-
-	key = extract_var_name(token, i);
-	if (!key)
-		return ;
-	value = ht_get(env, key);
-	if (value)
-		append_str(current, value);
-	free(key);
 }

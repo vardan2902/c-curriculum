@@ -6,11 +6,11 @@
 /*   By: vapetros <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/18 21:48:48 by vapetros          #+#    #+#             */
-/*   Updated: 2025/01/27 19:48:11 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/01/28 16:27:52 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 size_t	gnl_strlen(const char *s)
 {

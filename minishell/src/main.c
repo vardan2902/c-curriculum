@@ -83,7 +83,12 @@ int	prompt_loop(t_ht *map)
 {
 	char			*line;
 	unsigned char	status;
+	int				lim_fd;
+	char			*lim_path;
+	char			*lim;
 
+	lim_fd = -1;
+	lim_path = NULL;
 	if (!isatty(fileno(stdin)))
 	{
 		ht_set(map, "#ISNOTATTY", "TRUE");
@@ -94,6 +99,31 @@ int	prompt_loop(t_ht *map)
 			if (!line)
 				return (0);
 			process_prompt(line, map);
+			lim_path = ft_strjoin(ht_get(map, "#BASE_PATH"), "/.lim");
+			if (lim_path)
+				lim_fd = open(lim_path, O_RDONLY);
+			if (lim_fd >= 0)
+			{
+				while (1)
+				{
+					lim = get_next_line(lim_fd);
+					if (!lim)
+						break ;
+					while (lim)
+					{
+						line = get_next_line(STDIN_FILENO);
+						if (!line || !ft_strcmp(lim, line))
+							break ;
+					}
+					free(lim);
+				}
+				unlink(lim_path);
+				close(lim_fd);
+			}
+			free(lim_path);
+			status = (unsigned char)ft_atoi(ht_get(map, "?"));
+			if (status == 2)
+				return (status);
 			line = ft_strtrim(get_next_line(STDIN_FILENO), "\n");
 		}
 		status = (unsigned char)ft_atoi(ht_get(map, "?"));
@@ -119,8 +149,8 @@ int	main(int argc, char *argv[], char *envp[])
 	char			*termtype;
 	unsigned char	status;
 
-	(void)argc;
-	(void)argv;
+	if (argc > 1)
+		return (0);
 	termtype = getenv("TERM");
 	if (!termtype || tgetent(NULL, termtype) != 1)
 	{
@@ -132,7 +162,8 @@ int	main(int argc, char *argv[], char *envp[])
 	ht_init_from_env(&map, envp);
 	ht_set(&map, "?", "0");
 	ht_set(&map, "OLDPWD", NULL);
-	ht_set(&map, "0", "minishell");
+	ht_set(&map, "0", argv[0]);
+	ht_set(&map, "#BASE_PATH", ft_strdup(ht_get(&map, "PWD")));
 	status = prompt_loop(&map);
 	rl_clear_history();
 	return (status);

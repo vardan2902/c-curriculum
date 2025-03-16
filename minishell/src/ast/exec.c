@@ -98,12 +98,14 @@ int	execute_command(t_ast *node, t_ht *env)
 	pid_t				pid;
 	int					status;
 	int					last;
+	int					saved_stdin;
 	t_char_arr			*expanded;
 	struct sigaction	sa;
 
 	expanded = NULL;
+	saved_stdin = dup(STDIN_FILENO);
 	if (!node->cmd->name)
-		return (handle_redirections(node->cmd->redirections, env));
+		return (handle_redirections(node->cmd->redirections, env, saved_stdin));
 	while (!expanded)
 	{
 		expanded = expand_text(node->cmd->name, env);
@@ -118,9 +120,18 @@ int	execute_command(t_ast *node, t_ht *env)
 			node->cmd->args += 1;
 		}
 	}
-	if (!ft_strcmp(node->cmd->name, "."))
+	char	*trimmed_cmd;
+
+	trimmed_cmd = ft_strtrim(node->cmd->name, "\"'");
+	if (!ft_strcmp(trimmed_cmd, "") || !ft_strcmp(trimmed_cmd, ".."))
 	{
-		print_error("minishell: ", ".: ", "filename argument required");
+		print_error("minishell: ", trimmed_cmd, ": command not found");
+		return (127);
+	}
+	if (!ft_strcmp(trimmed_cmd, "."))
+	{
+		print_error("minishell: .: filename argument required",
+			"\n", ".: usage: . filename [arguments]");
 		return (2);
 	}
 	if (is_builtin(node->cmd->name)) 
@@ -137,7 +148,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	pid = fork();
 	if (pid == 0)
 	{
-		if (handle_redirections(node->cmd->redirections, env))
+		if (handle_redirections(node->cmd->redirections, env, saved_stdin))
 			exit(1);
 		if (node->token == T_CMD)
 			exec_non_builtin(node, env);

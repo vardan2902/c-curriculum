@@ -5,25 +5,28 @@ static char	*handle_relative_absolute_path(char *cmd, int *status)
 	char		*result;
 	struct stat	st;
 
-	result = NULL;
-	if (access(cmd, F_OK) == -1)
+	result = ft_strdup(cmd);
+	if (!result)
+		return (NULL);
+	*status = 0;
+	if (access(result, F_OK) == -1)
 	{
 		print_error("minishell: ", cmd, ": No such file or directory");
 		*status = 127;
 	}
-	else if (stat(cmd, &st) == 0 && S_ISDIR(st.st_mode))
+	else if (stat(result, &st) == 0 && S_ISDIR(st.st_mode))
 	{
 		print_error("minishell: ", cmd, ": is a directory");
 		*status = 126;
 	}
-	else if (access(cmd, X_OK) == 0)
-		result = cmd;
-	else
+	else if (access(result, X_OK) != 0)
 	{
 		print_error("minishell: ", cmd, ": Permission denied");
 		*status = 126;
 	}
-	return (result);
+	if (*status == 0)
+		return (result);
+	return (NULL);
 }
 
 static char	*get_executable_path(char **paths, char *path,
@@ -61,15 +64,9 @@ char	*build_cmd_path(char *cmd, t_ht *env, int *status)
 		return (handle_relative_absolute_path(cmd, status));
 	path = ht_get(env, "PATH");
 	if (!path)
-	{
-		*status = 127;
-		return (NULL);
-	}
+		return (handle_relative_absolute_path(cmd, status));
 	paths = ft_split(path, ':');
-	if (!paths)
-	{
-		*status = 127;
-		return (NULL);
-	}
+	if (!paths || !paths[0])
+		return (handle_relative_absolute_path(cmd, status));
 	return (get_executable_path(paths, path, cmd, status));
 }
