@@ -35,7 +35,26 @@ static int	handle_heredoc(int fd, const char *delimiter, t_ht *env, int saved_st
 			line = readline("> ");
 		if (!line || !ft_strcmp(line, *target.arr))
 			break ;
-		ft_putendl_fd(line, fd);
+		int	i = -1;
+		char *key;
+		char *value;
+		while (line[++i])
+		{
+			if (line[i] == '$')
+			{
+				key = extract_var_name(line, &i);
+				if (!key)
+                    continue ;
+				value = ht_get(env, key);
+				free(key);
+				if (!value)
+					continue ;
+				ft_putstr_fd(value, fd);
+			}
+			else
+				ft_putchar_fd(line[i], fd);
+		}
+		ft_putchar_fd('\n', fd);
 		free(line);
 	}
 	close(fd);
