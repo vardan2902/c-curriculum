@@ -2,24 +2,21 @@
 
 static int	(*get_builtin(char *cmd))(char **args, t_ht *env)
 {
-	char	*lower_cmd;
-
-	lower_cmd = get_lower_cmd(cmd);
-	if (!lower_cmd)
+	if (!cmd)
 		return (NULL);
-	if (!ft_strcmp(lower_cmd, "echo"))
+	if (!ft_strcmp(cmd, "echo"))
 		return (&ft_echo);
-	if (!ft_strcmp(lower_cmd, "pwd"))
+	if (!ft_strcmp(cmd, "pwd"))
 		return (&ft_pwd);
-	if (!ft_strcmp(lower_cmd, "cd"))
+	if (!ft_strcmp(cmd, "cd"))
 		return (&ft_cd);
-	if (!ft_strcmp(lower_cmd, "unset"))
+	if (!ft_strcmp(cmd, "unset"))
 		return (&ft_unset);
-	if (!ft_strcmp(lower_cmd, "exit"))
+	if (!ft_strcmp(cmd, "exit"))
 		return (&ft_exit);
-	if (!ft_strcmp(lower_cmd, "env"))
+	if (!ft_strcmp(cmd, "env"))
 		return (&ft_env);
-	if (!ft_strcmp(lower_cmd, "export"))
+	if (!ft_strcmp(cmd, "export"))
 		return (&ft_export);
 	return (NULL);
 }
@@ -59,7 +56,7 @@ static int	process_cmd_args(t_ast *node, t_char_arr *args, t_ht *env)
 	while (node->cmd->args[++i])
 	{
 		if (expand_and_append_args(args, node->cmd->args[i], env,
-				ft_strcmp(get_lower_cmd(args->arr[0]), "export") == 0))
+				ft_strcmp(args->arr[0], "export") == 0))
 			return (127);
 	}
 	return (0);
@@ -69,9 +66,9 @@ static void	set_env_vars(t_ht *env, t_char_arr *args, int status)
 {
 	char	*status_str;
 
-	ht_set(env, "_", args->arr[args->size - 1]);
+	ht_set(env, ft_strdup("_"), args->arr[args->size - 1]);
 	status_str = ft_itoa(status);
-	ht_set(env, "?", status_str);
+	ht_set(env, ft_strdup("?"), status_str);
 }
 
 int	exec_builtin(t_ast *node, t_ht *env)
@@ -94,7 +91,7 @@ int	exec_builtin(t_ast *node, t_ht *env)
 		restore_std_fds(saved_stdin, saved_stdout);
 		return (127);
 	}
-	ht_set(env, "_", args->arr[0]);
+	ht_set(env, ft_strdup("_"), ft_strdup(args->arr[0]));
 	status = (get_builtin(args->arr[0]))(args->arr, env);
 	set_env_vars(env, args, status);
 	restore_std_fds(saved_stdin, saved_stdout);

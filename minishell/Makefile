@@ -5,7 +5,7 @@ LIBFT_DIR		=	./libft
 READLINE_DIR	=	./readline
 INCLUDES		=	-I$(LIBFT_DIR) -I$(READLINE_DIR) -I./inc
 LINKERS			=	-L$(LIBFT_DIR) -lft -L$(READLINE_DIR) -lreadline -ltermcap
-CFLAGS			=	-Wall -Wextra -Werror -fsanitize=address -g
+CFLAGS			=	-Wall -Wextra -Werror -g
 OBJ_DIR			=	obj
 SRC_DIR			=	src
 SRC_FILES		=	main.c ast/ast.c ast/exec.c env/ht.c env/ht_resize.c env/ht_utils.c tokenizer/tokenizer.c \
@@ -23,7 +23,7 @@ MKDIR			=	mkdir -p
 all: $(NAME)
 
 $(NAME): $(OBJ_DIR) $(LIBFT) $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LINKERS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) $(LINKERS) -o $@
 
 $(OBJ_DIR):
 	$(MKDIR) $@

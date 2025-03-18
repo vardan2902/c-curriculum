@@ -8,7 +8,10 @@ int	ft_env(char **args, t_ht *env)
 	while (args[i])
 		++i;
 	if (i > 1)
+	{
+		print_error("env: ","","invalid arguments");
 		return (1);
+	}
 	print_env(env, 0);
 	return (0);
 }

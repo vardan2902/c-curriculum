@@ -62,7 +62,7 @@ int	ft_exit(char **args, t_ht *env)
 	if (*args && !is_numeric(*args))
 	{
 		print_error("minishell: exit: ", *args, ": numeric argument required");
-		exit(255);
+		exit(2);
 	}
 	if (i > 1)
 		return (ft_putendl_fd("minishell: exit: too many arguments", 2), 1);

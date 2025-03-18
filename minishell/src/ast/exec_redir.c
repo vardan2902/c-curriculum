@@ -1,28 +1,37 @@
 #include "minishell.h"
 
-static int	handle_heredoc(int fd, const char *delimiter, t_ht *env, int saved_stdin)
+static int	handle_heredoc(char *heredoc, const char *delimiter, t_ht *env, int saved_stdin)
 {
 	char		*line;
 	bool		is_not_a_tty;
 	char		*lim;
 	char		lim_fd;
 	t_char_arr	target;
+	bool		target_contains_quotes;
+	int			fd;
 
+	fd = open(heredoc, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	target.size = 1;
 	target.arr = (char **)ft_calloc(2, sizeof (char *));
 	if (!target.arr)
 		return (-1);
 	target.arr[0] = ft_strdup(delimiter);
+	target_contains_quotes = ft_strchr(*target.arr, '\'') || ft_strchr(*target.arr, '"');
 	remove_quotes(&target);
 	is_not_a_tty = ht_get(env, "#ISNOTATTY");
 	if (is_not_a_tty)
 	{
 		lim = ft_strjoin(ht_get(env, "#BASE_PATH"), "/.lim");
-		lim_fd = open(lim, O_RDWR | O_CREAT | O_APPEND, 0644);
+		lim_fd = open(lim, O_WRONLY | O_CREAT | O_APPEND, 0644);
 		if (lim_fd < 0)
 			return (-1);
-		while (get_next_line(lim_fd))
-			;
+		while (1)
+		{
+			char skipped = get_next_line(lim_fd);
+			if (!skipped)
+				break ;
+			free(skipped);
+		}
 		ft_putendl_fd(*target.arr, lim_fd);
 		close(lim_fd);
 	}
@@ -40,7 +49,7 @@ static int	handle_heredoc(int fd, const char *delimiter, t_ht *env, int saved_st
 		char *value;
 		while (line[++i])
 		{
-			if (line[i] == '$')
+			if (!target_contains_quotes && line[i] == '$')
 			{
 				key = extract_var_name(line, &i);
 				if (!key)
@@ -58,7 +67,8 @@ static int	handle_heredoc(int fd, const char *delimiter, t_ht *env, int saved_st
 		free(line);
 	}
 	close(fd);
-	fd = open(".heredoc", O_RDONLY);
+	fd = open(heredoc, O_RDONLY);
+	free(heredoc);
 	return (fd);
 }
 
@@ -130,9 +140,23 @@ int	handle_redirection(t_redirection *redir, t_ht *env, int saved_stdin)
 	}
 	else
 	{
-		unlink(".heredoc");
-		fd = open(".heredoc", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		fd = handle_heredoc(fd, redir->target, env, saved_stdin);
+		int i = 0;
+
+		while (1)
+		{
+			char *sym = ft_itoa(i);
+			char *heredoc = ft_strjoin(".heredoc_", sym);
+			if (access(heredoc, F_OK) == 0)
+			{
+				free(sym);
+				free(heredoc);
+				++i;
+				continue ;
+			}
+			free(sym);
+			fd = handle_heredoc(heredoc, redir->target, env, saved_stdin);
+			break ;
+		}
 	}
 	if (fd < 0)
 		return (handle_redirection_error(target));
@@ -147,7 +171,6 @@ int	handle_redirection(t_redirection *redir, t_ht *env, int saved_stdin)
 		free(target);
 	}
 	close(fd);
-	unlink(".heredoc");
 	return (0);
 }
 

@@ -70,7 +70,7 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	cmd_path = build_cmd_path(*(expanded->arr), env, &status);
 	if (!cmd_path)
 		exit(status);
-	ht_set(env, "_", cmd_path);
+	ht_set(env, ft_strdup("_"), cmd_path);
 	i = -1;
 	while (++i < expanded->size)
 		append_to_result(args, expanded->arr[i]);
@@ -103,7 +103,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	struct sigaction	sa;
 
 	expanded = NULL;
-	saved_stdin = dup(STDIN_FILENO);
+	saved_stdin = ft_atoi(ht_get(env, "#STDIN_FILENO"));
 	if (!node->cmd->name)
 		return (handle_redirections(node->cmd->redirections, env, saved_stdin));
 	while (!expanded)
@@ -120,20 +120,25 @@ int	execute_command(t_ast *node, t_ht *env)
 			node->cmd->args += 1;
 		}
 	}
-	char	*trimmed_cmd;
+	t_char_arr	unquoted;
 
-	trimmed_cmd = ft_strtrim(node->cmd->name, "\"'");
-	if (!ft_strcmp(trimmed_cmd, "") || !ft_strcmp(trimmed_cmd, ".."))
-	{
-		print_error("minishell: ", trimmed_cmd, ": command not found");
-		return (127);
-	}
-	if (!ft_strcmp(trimmed_cmd, "."))
+	unquoted.size = 1;
+	unquoted.arr = ft_calloc(2, sizeof(char *));
+	unquoted.arr[0] = ft_strdup(node->cmd->name);
+	remove_quotes(&unquoted);
+	if (!ft_strcmp(*unquoted.arr, "."))
 	{
 		print_error("minishell: .: filename argument required",
 			"\n", ".: usage: . filename [arguments]");
 		return (2);
 	}
+	if (**unquoted.arr == '\0' || !ft_strcmp(*unquoted.arr, ".."))
+	{
+		print_error(*unquoted.arr, ": ", "command not found");
+		return (127);
+	}
+	free(unquoted.arr[0]);
+	free(unquoted.arr);
 	if (is_builtin(node->cmd->name)) 
 		return (exec_builtin(node, env));
 	last = 0;
@@ -144,7 +149,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	if (!expanded)
 		return (1);
 	if (expanded->size > 0)
-		ht_set(env, "_", expanded->arr[expanded->size - 1]);
+		ht_set(env, ft_strdup("_"), expanded->arr[expanded->size - 1]);
 	pid = fork();
 	if (pid == 0)
 	{
@@ -162,6 +167,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	else
 	{
 		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;		 
 		sa.sa_handler = SIG_IGN;
 		sigaction(SIGINT, &sa, NULL); 
 		sigaction(SIGQUIT, &sa, NULL); 
@@ -184,7 +190,7 @@ static int	execute_ast_impl(t_ast *node, t_ht *env)
 	{
 		status = execute_command(node, env);
 		status_str = ft_itoa(status);
-		ht_set(env, "?", status_str);
+		ht_set(env, ft_strdup("?"), status_str);
 		return (status);
 	}
 	if (node->token == T_PIPE)
@@ -205,7 +211,24 @@ static int	execute_ast_impl(t_ast *node, t_ht *env)
 	}
 	return (1);
 }
+/*
+void	del_redir(void *arg)
+{
+	t_redirection	*redir;
 
+	redir = (t_redirection *)arg;
+	free(redir->target);
+}
+
+void	free_ast_node(t_ast *node)
+{
+	free(node->cmd->name);
+	free(node->cmd->args);
+	ft_lstclear(&node->cmd->redirections, del_redir);
+	free(node->cmd);
+	free(node);
+}
+*/
 int	execute_ast(t_ast *node, t_ht *env)
 {
 	pid_t   			pid;
@@ -219,7 +242,7 @@ int	execute_ast(t_ast *node, t_ht *env)
 		pid = fork();
 		if (pid == 0)
 		{
-			ht_set(env, "#IS_SUBSHELL", "TRUE");
+			ht_set(env, ft_strdup("#IS_SUBSHELL"), ft_strdup("TRUE"));
 			status = execute_ast_impl(node, env);
 			exit(status);
 		}
@@ -227,6 +250,7 @@ int	execute_ast(t_ast *node, t_ht *env)
 			return (1);
 		sigemptyset(&sa.sa_mask);
 		sa.sa_handler = SIG_IGN;
+		sa.sa_flags = 0;
 		sigaction(SIGINT, &sa, NULL);
 		sigaction(SIGQUIT, &sa, NULL);
 		waitpid(pid, &status, 0);

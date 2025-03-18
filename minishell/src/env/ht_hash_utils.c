@@ -18,7 +18,7 @@ void	add_new_node(t_ht *map, size_t index,
 	t_ht_node	*new_node;
 
 	new_node = (t_ht_node *)malloc(sizeof(t_ht_node));
-	new_node->key = ft_strdup(key);
+	new_node->key = (char *)key;
 	new_node->value = value;
 	new_node->next = map->table[index];
 	map->table[index] = new_node;
@@ -35,6 +35,9 @@ void	update_or_add_node(t_ht *map, unsigned int index,
 	{
 		if (ft_strcmp(node->key, key) == 0)
 		{
+			free(node->key);
+			free(node->value);
+			node->key = (char *)key;
 			node->value = value;
 			return ;
 		}

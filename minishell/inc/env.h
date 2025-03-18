@@ -36,5 +36,6 @@ size_t		ht_hash(const char *key, int size);
 t_ht_node	*find_node(t_ht *map, const char *key, t_ht_node **prev, size_t index);
 void		remove_node(t_ht *map, t_ht_node *node, t_ht_node *prev, size_t index);
 char		***ht_to_entries(t_ht *map);
+void		ht_clear(t_ht *map);
 
 #endif

@@ -50,7 +50,7 @@ static char	*get_executable_path(char **paths, char *path,
 		free(full_path);
 	}
 	free_char_matrix(paths);
-	print_error("minishell: ", cmd, ": command not found");
+	print_error(cmd, ": ", "command not found");
 	*status = 127;
 	return (NULL);
 }

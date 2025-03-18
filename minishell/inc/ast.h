@@ -50,7 +50,6 @@ int			handle_redirections_and_restore(t_list *redirections,
 			t_ht *env, int saved_stdin, int saved_stdout);
 int			exec_builtin(t_ast *node, t_ht *env);
 char		*extract_var_name(const char *token, int *i);
-char		*get_lower_cmd(const char *cmd);
 t_char_arr	*expand_text(const char *token, t_ht *env);
 void		expand_wildcards(t_char_arr *result);
 void		remove_quotes(t_char_arr *result);
@@ -70,7 +69,6 @@ void	free_char_matrix(char **matrix);
 void	append_str(char **result, const char *str);
 void	append_to_result(t_char_arr *arr, char *new_item);
 void	split_and_append(t_char_arr *result, const char *str);
-char	*get_lower_cmd(const char *cmd);
 bool 	is_builtin(const char *cmd);
 char	*build_cmd_path(char *cmd, t_ht *env, int *status);
 
