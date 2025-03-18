@@ -61,7 +61,7 @@ static int	are_parentheses_valid(t_ast **ast, t_list **token_lst)
 }
 
 static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst,
-	int indent)
+	int indent, t_ht *env)
 {
 	t_ast	*sub_ast;
 	t_token	*token;
@@ -69,7 +69,7 @@ static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst,
 	if (!are_parentheses_valid(ast, token_lst))
 		return (NULL);
 	*token_lst = (*token_lst)->next;
-	sub_ast = ast_create_from_tokens(token_lst, indent);
+	sub_ast = ast_create_from_tokens(token_lst, indent, env);
 	if (!(*token_lst) || !sub_ast)
 		return (NULL);
 	sub_ast->is_subshell = true;
@@ -87,7 +87,7 @@ static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst,
 	return (sub_ast);
 }
 
-t_ast	*ast_create_from_tokens(t_list **token_lst, int indent)
+t_ast	*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env)
 {
 	t_ast	*ast;
 	t_token	*token;
@@ -98,13 +98,13 @@ t_ast	*ast_create_from_tokens(t_list **token_lst, int indent)
 	while (*token_lst)
 	{
 		token = (t_token *)(*token_lst)->content;
-		if (is_word_or_redir(token->type) && !ast_add_cmd(ast, token_lst))
+		if (is_word_or_redir(token->type) && !ast_add_cmd(ast, token_lst, env))
 			return (NULL);
 		else if (is_operation(token->type)
 			&& !ast_add_logical_operator(&ast, token_lst, indent))
 			return (NULL);
 		else if (token->type == T_OPEN_PARENTHESIS
-			&& !ast_process_parentheses(&ast, token_lst, indent + 1))
+			&& !ast_process_parentheses(&ast, token_lst, indent + 1, env))
 			return (NULL);
 		else if (token->type == T_CLOSE_PARENTHESIS)
 		{

@@ -1,77 +1,5 @@
 #include "minishell.h"
 
-static int	handle_heredoc(char *heredoc, const char *delimiter, t_ht *env, int saved_stdin)
-{
-	char		*line;
-	bool		is_not_a_tty;
-	char		*lim;
-	char		lim_fd;
-	t_char_arr	target;
-	bool		target_contains_quotes;
-	int			fd;
-
-	fd = open(heredoc, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	target.size = 1;
-	target.arr = (char **)ft_calloc(2, sizeof (char *));
-	if (!target.arr)
-		return (-1);
-	target.arr[0] = ft_strdup(delimiter);
-	target_contains_quotes = ft_strchr(*target.arr, '\'') || ft_strchr(*target.arr, '"');
-	remove_quotes(&target);
-	is_not_a_tty = ht_get(env, "#ISNOTATTY");
-	if (is_not_a_tty)
-	{
-		lim = ft_strjoin(ht_get(env, "#BASE_PATH"), "/.lim");
-		lim_fd = open(lim, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		if (lim_fd < 0)
-			return (-1);
-		while (1)
-		{
-			char skipped = get_next_line(lim_fd);
-			if (!skipped)
-				break ;
-			free(skipped);
-		}
-		ft_putendl_fd(*target.arr, lim_fd);
-		close(lim_fd);
-	}
-	while (1)
-	{
-		dup2(saved_stdin, STDIN_FILENO);
-		if (is_not_a_tty)
-			line = ft_strtrim(get_next_line(STDIN_FILENO), "\n");
-		else
-			line = readline("> ");
-		if (!line || !ft_strcmp(line, *target.arr))
-			break ;
-		int	i = -1;
-		char *key;
-		char *value;
-		while (line[++i])
-		{
-			if (!target_contains_quotes && line[i] == '$')
-			{
-				key = extract_var_name(line, &i);
-				if (!key)
-                    continue ;
-				value = ht_get(env, key);
-				free(key);
-				if (!value)
-					continue ;
-				ft_putstr_fd(value, fd);
-			}
-			else
-				ft_putchar_fd(line[i], fd);
-		}
-		ft_putchar_fd('\n', fd);
-		free(line);
-	}
-	close(fd);
-	fd = open(heredoc, O_RDONLY);
-	free(heredoc);
-	return (fd);
-}
-
 static t_char_arr	*expand_and_validate_target(const char *target, t_ht *env)
 {
 	t_char_arr	*expanded;
@@ -88,7 +16,7 @@ static int	open_redirection_file(t_redirection *redir, const char *target)
 {
 	int	fd;
 
-	if (redir->type == T_INPUT)
+	if (redir->type == T_INPUT || redir->type == T_HEREDOC)
 		fd = open(target, O_RDONLY);
 	else if (redir->type == T_OUTPUT)
 		fd = open(target, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -120,44 +48,20 @@ static int	setup_redirection_fd(int fd, t_redirection *redir)
 	return (fd);
 }
 
-int	handle_redirection(t_redirection *redir, t_ht *env, int saved_stdin)
+int	handle_redirection(t_redirection *redir, t_ht *env)
 {
 	int			fd;
 	t_char_arr	*target;
 
-	target = NULL;
-	if (redir->type != T_HEREDOC)
+	target = expand_and_validate_target(redir->target, env);
+	if (!target)
+		return (1);
+	if (target->size > 1)
 	{
-		target = expand_and_validate_target(redir->target, env);
-		if (!target)
-			return (1);
-		if (target->size > 1)
-		{
-			print_error("minishell: ", redir->target, ": ambiguous redirect");
-			return (1);
-		}
-		fd = open_redirection_file(redir, *target->arr);
+		print_error("minishell: ", redir->target, ": ambiguous redirect");
+		return (1);
 	}
-	else
-	{
-		int i = 0;
-
-		while (1)
-		{
-			char *sym = ft_itoa(i);
-			char *heredoc = ft_strjoin(".heredoc_", sym);
-			if (access(heredoc, F_OK) == 0)
-			{
-				free(sym);
-				free(heredoc);
-				++i;
-				continue ;
-			}
-			free(sym);
-			fd = handle_heredoc(heredoc, redir->target, env, saved_stdin);
-			break ;
-		}
-	}
+	fd = open_redirection_file(redir, *target->arr);
 	if (fd < 0)
 		return (handle_redirection_error(target));
 	if (setup_redirection_fd(fd, redir) < 0)
@@ -165,21 +69,19 @@ int	handle_redirection(t_redirection *redir, t_ht *env, int saved_stdin)
 		close(fd);
 		return (handle_redirection_error(target));
 	}
-	if (target)
-	{
-		free(target->arr);
-		free(target);
-	}
+	free(target->arr);
+	free(target);
 	close(fd);
+	if (redir->type == T_HEREDOC)
+		unlink(redir->target);
 	return (0);
 }
 
-int	handle_redirections(t_list *redir_lst, t_ht *env, int saved_stdin)
+int	handle_redirections(t_list *redir_lst, t_ht *env)
 {
 	while (redir_lst)
 	{
-		if (handle_redirection((t_redirection *)redir_lst->content, env, 
-				saved_stdin) != 0)
+		if (handle_redirection((t_redirection *)redir_lst->content, env) != 0)
 			return (1);
 		redir_lst = redir_lst->next;
 	}
@@ -189,7 +91,7 @@ int	handle_redirections(t_list *redir_lst, t_ht *env, int saved_stdin)
 int	handle_redirections_and_restore(t_list *redirections,
 	t_ht *env, int saved_stdin, int saved_stdout)
 {
-	if (handle_redirections(redirections, env, saved_stdin) != 0)
+	if (handle_redirections(redirections, env) != 0)
 	{
 		restore_std_fds(saved_stdin, saved_stdout);
 		return (1);

@@ -98,14 +98,12 @@ int	execute_command(t_ast *node, t_ht *env)
 	pid_t				pid;
 	int					status;
 	int					last;
-	int					saved_stdin;
 	t_char_arr			*expanded;
 	struct sigaction	sa;
 
 	expanded = NULL;
-	saved_stdin = ft_atoi(ht_get(env, "#STDIN_FILENO"));
 	if (!node->cmd->name)
-		return (handle_redirections(node->cmd->redirections, env, saved_stdin));
+		return (handle_redirections(node->cmd->redirections, env));
 	while (!expanded)
 	{
 		expanded = expand_text(node->cmd->name, env);
@@ -153,7 +151,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	pid = fork();
 	if (pid == 0)
 	{
-		if (handle_redirections(node->cmd->redirections, env, saved_stdin))
+		if (handle_redirections(node->cmd->redirections, env))
 			exit(1);
 		if (node->token == T_CMD)
 			exec_non_builtin(node, env);
