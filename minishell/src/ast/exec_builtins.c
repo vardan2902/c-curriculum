@@ -79,7 +79,7 @@ int	exec_builtin(t_ast *node, t_ht *env)
 	t_char_arr	*args;
 
 	save_std_fds(&saved_stdin, &saved_stdout);
-	if (handle_redirections_and_restore(node->cmd->redirections,
+	if (handle_redirections_and_restore(node->cmd,
 			env, saved_stdin, saved_stdout))
 		return (1);
 	args = (t_char_arr *)ft_calloc(1, sizeof(t_char_arr));

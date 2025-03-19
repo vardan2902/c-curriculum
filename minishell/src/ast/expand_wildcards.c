@@ -124,8 +124,7 @@ static void	add_matches(t_char_arr *matches, const char *pattern,
 	entry = readdir(dir);
 	while (entry != NULL)
 	{
-		if ((!show_hidden && (ft_strcmp(entry->d_name, ".") == 0
-			|| ft_strcmp(entry->d_name, "..") == 0))
+		if ((!show_hidden && (ft_strncmp(entry->d_name, ".", 1) == 0))
 			|| !match_pattern(pattern, entry->d_name)
 			|| (ends_with_slash && (stat(entry->d_name, &st) == -1
 					|| !S_ISDIR(st.st_mode))))

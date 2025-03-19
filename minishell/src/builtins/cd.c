@@ -18,7 +18,7 @@ static int	check_permissions(char *pwd)
 	return (1);
 }
 
-static int	check_errors(char *pwd, char **args)
+static int	change_cd_path(char *pwd, char **args)
 {
 	int	i;
 
@@ -51,8 +51,12 @@ int	ft_cd(char **args, t_ht *env)
 	cd_old_pwd = 0;
 	args += 1;
 	old_pwd = ht_get(env, "PWD");
-	if (!*args)
+	if (!*args || !ft_strcmp(args[0], "--"))
+	{
 		pwd = ht_get(env, "HOME");
+		if (!pwd)
+			return (print_error("minishell: ", "cd: ", "HOME not set"), 0);
+	}
 	else if (!ft_strcmp(*args, "-"))
 	{
 		pwd = ht_get(env, "OLDPWD");
@@ -62,7 +66,7 @@ int	ft_cd(char **args, t_ht *env)
 	}
 	else
 		pwd = *args;
-	if (check_errors(pwd, args))
+	if (change_cd_path(pwd, args))
 		return (1);
 	if (cd_old_pwd)
 		ft_putendl_fd(pwd, STDOUT_FILENO);

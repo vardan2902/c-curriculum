@@ -44,17 +44,21 @@ static void	handle_tilde_expansion(const char *token, int i,
 	char **current, t_ht *env)
 {
 	char	*identifier;
+	char	*home;
 
+	home = ht_get(env, "HOME");
+	if (!home)
+		return ;
 	if (i == 0)
 	{
 		free(*current);
-		*current = ft_strdup(ht_get(env, "HOME"));
+		*current = ft_strdup(home);
 	}
 	else if (i > 0 && token[i - 1] == '=')
 	{
 		identifier = ft_substr(*current, 0, ft_strlen(*current) - 1);
 		if (is_valid_identifier(identifier, 0))
-			append_str(current, ht_get(env, "HOME"));
+			append_str(current, home);
 		else
 			append_str(current, "~");
 		free(identifier);
@@ -107,7 +111,7 @@ static void	expand_symbols(const char *token, char **current,
 		{
 			char	str[2];
 			
-			if (!token[i + 1] || ft_isspace(token[i + 1])
+			if (!token[i + 1] || (!ft_isalnum(token[i + 1]) && !ft_strchr("_?\"'", token[i + 1]))
 				|| (in_double && ft_isquote(token[i + 1])))
 			{
 				str[0] = token[i];

@@ -12,6 +12,11 @@ char	*extract_var_name(const char *token, int *i)
 	if (token[start] == '$')
 		return (*i = start, ft_strdup("$"));
 	len = 0;
+	if (ft_isdigit(token[start + len]))
+	{
+		++len;
+		return (ft_substr(token, start, len));
+	}
 	while (ft_isalnum(token[start + len]) || token[start + len] == '_')
 		len++;
 	if (len == 0)

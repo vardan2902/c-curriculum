@@ -68,7 +68,7 @@ void	ht_init_from_env(t_ht *map, char **envp)
 		key_len = equal - envp[i];
 		key = ft_substr(envp[i], 0, key_len);
 		value = ft_substr(equal + 1, 0, ft_strlen(equal + 1));
-		if (!ft_strcmp("SHLVL", key))
+		if (!ft_strcmp("SHLVL", key) && isatty(fileno(stdin)))
 		{
 			key_len = ft_atoi(value);
 			free(value);

@@ -48,7 +48,7 @@ static int	setup_redirection_fd(int fd, t_redirection *redir)
 	return (fd);
 }
 
-int	handle_redirection(t_redirection *redir, t_ht *env)
+int	handle_redirection(char *cmd, t_redirection *redir, t_ht *env)
 {
 	int			fd;
 	t_char_arr	*target;
@@ -64,7 +64,7 @@ int	handle_redirection(t_redirection *redir, t_ht *env)
 	fd = open_redirection_file(redir, *target->arr);
 	if (fd < 0)
 		return (handle_redirection_error(target));
-	if (setup_redirection_fd(fd, redir) < 0)
+	if (cmd && setup_redirection_fd(fd, redir) < 0)
 	{
 		close(fd);
 		return (handle_redirection_error(target));
@@ -72,26 +72,27 @@ int	handle_redirection(t_redirection *redir, t_ht *env)
 	free(target->arr);
 	free(target);
 	close(fd);
-	if (redir->type == T_HEREDOC)
-		unlink(redir->target);
 	return (0);
 }
 
-int	handle_redirections(t_list *redir_lst, t_ht *env)
+int	handle_redirections(t_cmd *cmd, t_ht *env)
 {
+	t_list	*redir_lst;
+
+	redir_lst = cmd->redirections;
 	while (redir_lst)
 	{
-		if (handle_redirection((t_redirection *)redir_lst->content, env) != 0)
+		if (handle_redirection(cmd->name, (t_redirection *)redir_lst->content, env) != 0)
 			return (1);
 		redir_lst = redir_lst->next;
 	}
 	return (0);
 }
 
-int	handle_redirections_and_restore(t_list *redirections,
+int	handle_redirections_and_restore(t_cmd *cmd,
 	t_ht *env, int saved_stdin, int saved_stdout)
 {
-	if (handle_redirections(redirections, env) != 0)
+	if (handle_redirections(cmd, env) != 0)
 	{
 		restore_std_fds(saved_stdin, saved_stdout);
 		return (1);

@@ -16,9 +16,44 @@ extern volatile sig_atomic_t	g_signal_int;
 //     switch (node->token)
 //     {
 //     case T_CMD:
-//         printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
+// 	{
+// 		if (node->cmd)
+// 		{
+// 			printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
+// 			int i = 0;
+// 			for (int i = 0; i < level; i++)
+// 				printf("  ");	
+// 			printf("ARGS: ");
+// 			while (node->cmd->args[++i])
+// 				printf("%s, ", node->cmd->args[i]);
+// 			printf("\n");
+// 			for (int i = 0; i < level; i++)
+// 				printf("  ");	
+// 			printf("REDIRS: ");
+// 			if (node->cmd->redirections)
+// 			{
+// 				t_list *tmp = node->cmd->redirections;
+
+// 				while (tmp)
+// 				{
+// 					t_redirection *redir = ((t_redirection *)(tmp->content));
+// 					if (redir->type == T_HEREDOC)
+// 						printf("T_HEREDOC");
+// 					else if (redir->type == T_INPUT)
+// 						printf("T_INPUT");
+// 					else if (redir->type == T_APPEND)
+// 						printf("T_APPEND");
+// 					else if (redir->type == T_OUTPUT)
+// 							printf("T_OUTPUT");
+// 					printf(" (%s)", redir->target);
+// 					tmp = tmp->next;
+// 				}
+// 			}
+// 			printf("\n");
+// 		}
 //         break;
-//     case T_PIPE:
+// 	}
+// 	case T_PIPE:
 //         printf("PIPE\n");
 //         break;
 //     case T_AND:
@@ -125,6 +160,7 @@ int	prompt_loop(t_ht *map)
 			if (!line)
 				return (0);
 			process_prompt(line, map);
+			unlink_heredocs();
 			status = (unsigned char)ft_atoi(ht_get(map, "?"));
 			if (status == 2)
 				return (status);
@@ -144,6 +180,7 @@ int	prompt_loop(t_ht *map)
 		}
 		g_signal_int = 0;
 		process_prompt(line, map);
+		unlink_heredocs();
 	}
 }
 
@@ -167,7 +204,15 @@ int	main(int argc, char *argv[], char *envp[])
 	ht_init_from_env(&map, envp);
 	ht_set(&map, ft_strdup("?"), ft_strdup("0"));
 	ht_set(&map, ft_strdup("0"), ft_strdup(argv[0]));
-	ht_set(&map, ft_strdup("#BASE_PATH"), ft_strdup(ht_get(&map, "PWD")));
+	char *pwd = ht_get(&map, "PWD");
+	if (!pwd)
+	{
+		pwd = getcwd(NULL, 0);
+		ht_set(&map, ft_strdup("PWD"), pwd);
+	}
+	if (!ht_get(&map, "SHLVL"))
+		ht_set(&map, ft_strdup("SHLVL"), ft_strdup("1"));
+	ht_set(&map, ft_strdup("#BASE_PATH"), ft_strdup(pwd));
 	status = prompt_loop(&map);
 	rl_clear_history();
 	ht_clear(&map);

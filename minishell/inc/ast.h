@@ -46,7 +46,7 @@ int			is_word_or_redir(t_cmd_token_types type);
 int			is_operation(t_cmd_token_types type);
 int			ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env);
 int			ast_add_cmd(t_ast *it, t_list **token_lst, t_ht *env);
-int			handle_redirections_and_restore(t_list *redirections,
+int			handle_redirections_and_restore(t_cmd *cmd,
 			t_ht *env, int saved_stdin, int saved_stdout);
 int			exec_builtin(t_ast *node, t_ht *env);
 char		*extract_var_name(const char *token, int *i);
@@ -54,7 +54,7 @@ t_char_arr	*expand_text(const char *token, t_ht *env);
 void		expand_wildcards(t_char_arr *result);
 void		remove_quotes(t_char_arr *result);
 void		append_to_result(t_char_arr *arr, char *new_item);
-int			handle_redirections(t_list *redir_lst, t_ht *env);
+int			handle_redirections(t_cmd *cmd, t_ht *env);
 
 void		append_str(char **result, const char *str);
 
@@ -71,5 +71,6 @@ void	append_to_result(t_char_arr *arr, char *new_item);
 void	split_and_append(t_char_arr *result, const char *str);
 bool 	is_builtin(const char *cmd);
 char	*build_cmd_path(char *cmd, t_ht *env, int *status);
+void	del_redir(void *arg);
 
 #endif

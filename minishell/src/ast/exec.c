@@ -7,6 +7,30 @@ void	*ft_free(void *ptr)
 	return (NULL);
 }
 
+void	free_ast_node(t_ast *node)
+{
+	t_list	*it;
+	int		i;
+
+	if (!node)
+		return ;
+	if (!node->cmd)
+		return (free(node));
+	while (node->cmd && node->cmd->redirections)
+	{
+		it = node->cmd->redirections;
+		node->cmd->redirections = node->cmd->redirections->next;
+		free(((t_redirection *)(it->content))->target);
+		free(it->content);
+		free(it);
+	}
+	i = -1;
+	while (node->cmd->args && node->cmd->args[++i])
+		free(node->cmd->args[i]);
+	ft_free(node->cmd);
+	ft_free(node);
+}
+
 void remove_quotes(t_char_arr *result)
 {
 	size_t i;
@@ -69,7 +93,16 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	remove_quotes(expanded);
 	cmd_path = build_cmd_path(*(expanded->arr), env, &status);
 	if (!cmd_path)
+	{
+		free_ast_node(node);
+		free(args);
+		i = -1;
+		while (++i < expanded->size)
+			free(expanded->arr[i]);
+		free(expanded->arr);
+		free(expanded);
 		exit(status);
+	}
 	ht_set(env, ft_strdup("_"), cmd_path);
 	i = -1;
 	while (++i < expanded->size)
@@ -78,9 +111,12 @@ void	exec_non_builtin(t_ast *node, t_ht *env)
 	while (node->cmd->args[++i])
 	{
 		expanded = expand_text(node->cmd->args[i], env);
-		free(node->cmd->args[i]);
 		if (!expanded)
-			return ;
+		{
+			free_ast_node(node);
+			exit(1);
+		}
+		free(node->cmd->args[i]);
 		expand_wildcards(expanded);
 		remove_quotes(expanded);
 		j = -1;
@@ -103,7 +139,7 @@ int	execute_command(t_ast *node, t_ht *env)
 
 	expanded = NULL;
 	if (!node->cmd->name)
-		return (handle_redirections(node->cmd->redirections, env));
+		return (handle_redirections(node->cmd, env));
 	while (!expanded)
 	{
 		expanded = expand_text(node->cmd->name, env);
@@ -114,6 +150,7 @@ int	execute_command(t_ast *node, t_ht *env)
 				++last;
 			if (last <= 1)
 				return (0);
+			free(node->cmd->name);
 			node->cmd->name = node->cmd->args[1];
 			node->cmd->args += 1;
 		}
@@ -151,7 +188,7 @@ int	execute_command(t_ast *node, t_ht *env)
 	pid = fork();
 	if (pid == 0)
 	{
-		if (handle_redirections(node->cmd->redirections, env))
+		if (handle_redirections(node->cmd, env))
 			exit(1);
 		if (node->token == T_CMD)
 			exec_non_builtin(node, env);
@@ -209,7 +246,7 @@ static int	execute_ast_impl(t_ast *node, t_ht *env)
 	}
 	return (1);
 }
-/*
+
 void	del_redir(void *arg)
 {
 	t_redirection	*redir;
@@ -217,7 +254,7 @@ void	del_redir(void *arg)
 	redir = (t_redirection *)arg;
 	free(redir->target);
 }
-
+/*
 void	free_ast_node(t_ast *node)
 {
 	free(node->cmd->name);
