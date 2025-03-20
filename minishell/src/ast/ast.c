@@ -1,5 +1,26 @@
 #include "minishell.h"
 
+void	free_ast_node(t_ast *node)
+{
+	int		i;
+
+	if (!node)
+		return ;
+	if (node->cmd)
+	{
+		ft_lstclear(&node->cmd->redirections, del_redir);
+		i = -1;
+		if (node->cmd->args)
+		{
+			while (node->cmd->args[++i])
+				free(node->cmd->args[i]);
+			ft_free(node->cmd->args);
+		}
+		ft_free(node->cmd);
+	}
+	ft_free(node);
+}
+
 static t_ast	*assign_operator_node(t_ast **root, t_list **token_lst, int indent)
 {
 	t_list	*it;
@@ -65,10 +86,13 @@ static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst,
 {
 	t_ast	*sub_ast;
 	t_token	*token;
+	t_list	*it;
 
 	if (!are_parentheses_valid(ast, token_lst))
 		return (NULL);
+	it = *token_lst;
 	*token_lst = (*token_lst)->next;
+	del_token(it);
 	sub_ast = ast_create_from_tokens(token_lst, indent, env);
 	if (!(*token_lst) || !sub_ast)
 		return (NULL);
@@ -98,23 +122,35 @@ t_ast	*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env)
 	while (*token_lst)
 	{
 		token = (t_token *)(*token_lst)->content;
-		if (is_word_or_redir(token->type) && !ast_add_cmd(ast, token_lst, env))
-			return (NULL);
-		else if (is_operation(token->type)
-			&& !ast_add_logical_operator(&ast, token_lst, indent))
-			return (NULL);
-		else if (token->type == T_OPEN_PARENTHESIS
-			&& !ast_process_parentheses(&ast, token_lst, indent + 1, env))
-			return (NULL);
+		if (is_word_or_redir(token->type))
+		{
+			if (!ast_add_cmd(ast, token_lst, env))
+				return (free_ast_node(ast), NULL);
+		}
+		else if (is_operation(token->type))
+		{
+			if (!ast_add_logical_operator(&ast, token_lst, indent))
+				return (free_ast_node(ast), NULL);
+		}
+		else if (token->type == T_OPEN_PARENTHESIS)
+		{
+			if (!ast_process_parentheses(&ast, token_lst, indent + 1, env))
+				return (free_ast_node(ast), NULL);
+		}
 		else if (token->type == T_CLOSE_PARENTHESIS)
 		{
 			if (ast->token == T_NONE || !indent)
-				return (print_syntax_error(")"), NULL);
+			{
+				free_ast_node(ast);
+				print_syntax_error(")");
+				return (NULL);
+			}
 			return (ast);
 		}
 	}
 	if (indent != 0)
 	{
+		free_ast_node(ast);
 		print_syntax_error("(");
 		return (NULL);
 	}

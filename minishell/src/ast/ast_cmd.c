@@ -45,7 +45,6 @@ static int	add_cmd(t_ast *it, t_list **token_lst, t_ht *env)
 	size_t	i;
 
 	size = 0;
-	i = -1;
 	it->token = T_CMD;
 	it->cmd = (t_cmd *)ft_calloc(1, sizeof (t_cmd));
 	if (!it->cmd)
@@ -58,11 +57,13 @@ static int	add_cmd(t_ast *it, t_list **token_lst, t_ht *env)
 	it->cmd->args = (char **)malloc((size + 1) * sizeof (char *));
 	if (!it->cmd->args)
 		return (free(it->cmd), 0);
+	i = -1;
 	while (++i < size)
 	{
 		it->cmd->args[i] = ((t_token *)((*token_lst)->content))->value;
 		token_it = *token_lst;
 		*token_lst = (*token_lst)->next;
+		free(token_it->content);
 		free(token_it);
 	}
 	it->cmd->args[size] = NULL;

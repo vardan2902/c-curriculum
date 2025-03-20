@@ -55,6 +55,7 @@ void		expand_wildcards(t_char_arr *result);
 void		remove_quotes(t_char_arr *result);
 void		append_to_result(t_char_arr *arr, char *new_item);
 int			handle_redirections(t_cmd *cmd, t_ht *env);
+void		free_ast_node(t_ast *node);
 
 void		append_str(char **result, const char *str);
 

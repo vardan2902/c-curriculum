@@ -2,100 +2,101 @@
 
 extern volatile sig_atomic_t	g_signal_int;
 
-// static void print_node(t_ast *node, int level)
-// {
-//     for (int i = 0; i < level; i++)
-//         printf("  "); // Indent based on the level
+void print_node(t_ast *node, int level)
+{
+    for (int i = 0; i < level; i++)
+        printf("  "); // Indent based on the level
 
-//     if (!node)
-//     {
-//         printf("(null)\n");
-//         return;
-//     }
+    if (!node)
+    {
+        printf("(null)\n");
+        return;
+    }
 
-//     switch (node->token)
-//     {
-//     case T_CMD:
-// 	{
-// 		if (node->cmd)
-// 		{
-// 			printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
-// 			int i = 0;
-// 			for (int i = 0; i < level; i++)
-// 				printf("  ");	
-// 			printf("ARGS: ");
-// 			while (node->cmd->args[++i])
-// 				printf("%s, ", node->cmd->args[i]);
-// 			printf("\n");
-// 			for (int i = 0; i < level; i++)
-// 				printf("  ");	
-// 			printf("REDIRS: ");
-// 			if (node->cmd->redirections)
-// 			{
-// 				t_list *tmp = node->cmd->redirections;
+    switch (node->token)
+    {
+    case T_CMD:
+	{
+		if (node->cmd)
+		{
+			printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
+			int i = -1;
+			for (int i = 0; i < level; i++)
+				printf("  ");	
+			printf("ARGS: ");
+			while (node->cmd->args[++i])
+				printf("%s, ", node->cmd->args[i]);
+			printf("\n");
+			for (int i = 0; i < level; i++)
+				printf("  ");	
+			printf("REDIRS: ");
+			if (node->cmd->redirections)
+			{
+				t_list *tmp = node->cmd->redirections;
 
-// 				while (tmp)
-// 				{
-// 					t_redirection *redir = ((t_redirection *)(tmp->content));
-// 					if (redir->type == T_HEREDOC)
-// 						printf("T_HEREDOC");
-// 					else if (redir->type == T_INPUT)
-// 						printf("T_INPUT");
-// 					else if (redir->type == T_APPEND)
-// 						printf("T_APPEND");
-// 					else if (redir->type == T_OUTPUT)
-// 							printf("T_OUTPUT");
-// 					printf(" (%s)", redir->target);
-// 					tmp = tmp->next;
-// 				}
-// 			}
-// 			printf("\n");
-// 		}
-//         break;
-// 	}
-// 	case T_PIPE:
-//         printf("PIPE\n");
-//         break;
-//     case T_AND:
-//         printf("AND\n");
-//         break;
-//     case T_OR:
-//         printf("OR\n");
-//         break;
-//     case T_NONE:
-//         printf("NONE\n");
-//         break;
-//     default:
-//         printf("UNKNOWN\n");
-//         break;
-//     }
+				while (tmp)
+				{
+					t_redirection *redir = ((t_redirection *)(tmp->content));
+					if (redir->type == T_HEREDOC)
+						printf("T_HEREDOC");
+					else if (redir->type == T_INPUT)
+						printf("T_INPUT");
+					else if (redir->type == T_APPEND)
+						printf("T_APPEND");
+					else if (redir->type == T_OUTPUT)
+							printf("T_OUTPUT");
+					printf(" (%s)", redir->target);
+					tmp = tmp->next;
+				}
+			}
+			printf("\n");
+		}
+        break;
+	}
+	case T_PIPE:
+        printf("PIPE\n");
+        break;
+    case T_AND:
+        printf("AND\n");
+        break;
+    case T_OR:
+        printf("OR\n");
+        break;
+    case T_NONE:
+        printf("NONE\n");
+        break;
+    default:
+        printf("UNKNOWN\n");
+        break;
+    }
 
-//     if (node->is_subshell)
-//     {
-//         for (int i = 0; i < level + 1; i++)
-//             printf("  ");
-//         printf("(subshell)\n");
-//     }
-// }
+    if (node->is_subshell)
+    {
+        for (int i = 0; i < level + 1; i++)
+            printf("  ");
+        printf("(subshell)\n");
+    }
+}
 
-// void print_ast(t_ast *node, int level)
-// {
-//     if (!node)
-//         return;
+void print_ast(t_ast *node, int level)
+{
+    if (!node)
+        return;
 
-//     // Print the current node
-//     print_node(node, level);
+    // Print the current node
+    print_node(node, level);
 
-//     // Recursively print the left and right children
-//     print_ast(node->left, level + 1);
-//     print_ast(node->right, level + 1);
-// }
+    // Recursively print the left and right children
+    print_ast(node->left, level + 1);
+    print_ast(node->right, level + 1);
+}
 
 void	process_prompt(char *line, t_ht *map)
 {
 	t_list	*token_lst;
 	t_ast	*ast;
-	char	*status;
+	int		status;
+	char	*status_str;
 
 	if (*line == '\0')
 		return (free(line));
@@ -105,11 +106,13 @@ void	process_prompt(char *line, t_ht *map)
 	if (!token_lst)
 		return ;
 	ast = ast_create_from_tokens(&token_lst, 0, map);
+	ft_lstclear(&token_lst, del_token);
 	if (!ast)
 		return (ht_set(map, ft_strdup("?"), ft_strdup("2")));
 	// print_ast(ast, 0);
-	status = ft_itoa((unsigned char)execute_ast(ast, map));
-	ht_set(map, ft_strdup("?"), status);
+	status = execute_ast(ast, map);
+	status_str = ft_itoa((unsigned char)status);
+	ht_set(map, ft_strdup("?"), status_str);
 }
 
 char	*get_prompt_line()

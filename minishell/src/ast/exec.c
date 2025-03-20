@@ -7,30 +7,6 @@ void	*ft_free(void *ptr)
 	return (NULL);
 }
 
-void	free_ast_node(t_ast *node)
-{
-	t_list	*it;
-	int		i;
-
-	if (!node)
-		return ;
-	if (!node->cmd)
-		return (free(node));
-	while (node->cmd && node->cmd->redirections)
-	{
-		it = node->cmd->redirections;
-		node->cmd->redirections = node->cmd->redirections->next;
-		free(((t_redirection *)(it->content))->target);
-		free(it->content);
-		free(it);
-	}
-	i = -1;
-	while (node->cmd->args && node->cmd->args[++i])
-		free(node->cmd->args[i]);
-	ft_free(node->cmd);
-	ft_free(node);
-}
-
 void remove_quotes(t_char_arr *result)
 {
 	size_t i;
@@ -151,8 +127,10 @@ int	execute_command(t_ast *node, t_ht *env)
 			if (last <= 1)
 				return (0);
 			free(node->cmd->name);
-			node->cmd->name = node->cmd->args[1];
-			node->cmd->args += 1;
+			int i = -1;
+			while (node->cmd->args[++i])
+				node->cmd->args[i] = node->cmd->args[i + 1];
+			node->cmd->name = node->cmd->args[0];
 		}
 	}
 	t_char_arr	unquoted;
@@ -172,19 +150,25 @@ int	execute_command(t_ast *node, t_ht *env)
 		print_error(*unquoted.arr, ": ", "command not found");
 		return (127);
 	}
-	free(unquoted.arr[0]);
-	free(unquoted.arr);
-	if (is_builtin(node->cmd->name)) 
+
+	if (is_builtin(unquoted.arr[0]))
+	{
+		free_char_arr(&unquoted);
 		return (exec_builtin(node, env));
+	}
+	free_char_arr(&unquoted);
 	last = 0;
-	while (node->cmd->args[last])
+	while (node->cmd->args[last + 1])
 		++last;
-	--last;
+	free_char_arr(expanded);
+	free(expanded);
 	expanded = expand_text(node->cmd->args[last], env);
 	if (!expanded)
 		return (1);
 	if (expanded->size > 0)
-		ht_set(env, ft_strdup("_"), expanded->arr[expanded->size - 1]);
+		ht_set(env, ft_strdup("_"), ft_strdup(expanded->arr[expanded->size - 1]));
+	free_char_arr(expanded);
+	free(expanded);
 	pid = fork();
 	if (pid == 0)
 	{
@@ -226,22 +210,30 @@ static int	execute_ast_impl(t_ast *node, t_ht *env)
 		status = execute_command(node, env);
 		status_str = ft_itoa(status);
 		ht_set(env, ft_strdup("?"), status_str);
+		free_ast_node(node);
 		return (status);
 	}
 	if (node->token == T_PIPE)
-		return (execute_pipe(node, env));
+	{
+		status = execute_pipe(node, env);
+		status_str = ft_itoa(status);
+		free_ast_node(node);
+		return (status);
+	}
 	if (node->token == T_AND)
 	{
 		status = execute_ast(node->left, env);
 		if (status == 0)
-			return (execute_ast(node->right, env));
+			status = execute_ast(node->right, env);
+		free_ast_node(node);
 		return (status);
 	}
 	if (node->token == T_OR)
 	{
 		status = execute_ast(node->left, env);
 		if (status != 0)
-			return (execute_ast(node->right, env));
+			status = execute_ast(node->right, env);
+		free_ast_node(node);
 		return (status);
 	}
 	return (1);
@@ -253,17 +245,9 @@ void	del_redir(void *arg)
 
 	redir = (t_redirection *)arg;
 	free(redir->target);
+	free(redir);
 }
-/*
-void	free_ast_node(t_ast *node)
-{
-	free(node->cmd->name);
-	free(node->cmd->args);
-	ft_lstclear(&node->cmd->redirections, del_redir);
-	free(node->cmd);
-	free(node);
-}
-*/
+
 int	execute_ast(t_ast *node, t_ht *env)
 {
 	pid_t   			pid;
@@ -294,5 +278,6 @@ int	execute_ast(t_ast *node, t_ht *env)
 			return (WEXITSTATUS(status));
 		return (1);
 	}
-	return (execute_ast_impl(node, env));
+	status = execute_ast_impl(node, env);
+	return (status);
 }

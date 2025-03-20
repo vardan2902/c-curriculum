@@ -11,9 +11,8 @@ void	del_token(void *args)
 	t_token	*token;
 
 	token = (t_token *)args;
-	if (!token || !token->value)
-		return ;
-	free(token->value);
+	if (token && token->value)
+		free(token->value);
 	free(token);
 }
 

@@ -26,6 +26,7 @@ static char	*handle_relative_absolute_path(char *cmd, int *status)
 	}
 	if (*status == 0)
 		return (result);
+	free(result);
 	return (NULL);
 }
 

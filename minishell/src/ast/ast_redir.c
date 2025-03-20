@@ -91,16 +91,13 @@ static int	is_redir_valid(t_list **token_lst, t_token *token)
 
 static void	process_redirection_target(t_redirection *redir, t_list **token_lst, t_ht *env)
 {
-	t_list	*token_it;
 	char	*target;
 
 	target = ((t_token *)(*token_lst)->content)->value;
 	if (redir->type == T_HEREDOC)
 		target = handle_heredoc(target, env);
 	redir->target = target;
-	token_it = *token_lst;
 	*token_lst = (*token_lst)->next;
-	free(token_it);
 }
 
 static int	add_redirection_to_cmd(t_cmd *cmd, t_redirection *redir)
@@ -110,6 +107,7 @@ static int	add_redirection_to_cmd(t_cmd *cmd, t_redirection *redir)
 	redir_token = ft_lstnew(redir);
 	if (!redir_token)
 	{
+		free(redir->target);
 		free(redir);
 		return (0);
 	}
@@ -121,7 +119,7 @@ int	ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env)
 {
 	t_redirection	*redir;
 	t_token			*token;
-	t_list			*token_it;
+	t_list			*it;
 
 	token = (t_token *)(*token_lst)->content;
 	while (*token_lst && is_redir(token->type))
@@ -130,13 +128,17 @@ int	ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env)
 		redir = create_redirection(token->type);
 		if (!redir)
 			return (0);
-		token_it = *token_lst;
+		it = *token_lst;
 		*token_lst = (*token_lst)->next;
-		free(token_it);
+		free(((t_token *)it->content)->value);
+		free(it);
 		if (*token_lst)
 			token = (t_token *)(*token_lst)->content;
 		if (!is_redir_valid(token_lst, token))
-			return (free(redir), 0);
+		{
+			free(redir);
+			return (0);
+		}
 		process_redirection_target(redir, token_lst, env);
 		if (prev)
 			prev->next = *token_lst;

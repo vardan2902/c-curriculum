@@ -48,8 +48,11 @@ t_list	*get_token_lst(char *prompt)
 			return (ft_lstclear(&token_lst, &del_token), NULL);
 		new_node = ft_lstnew(token);
 		if (!new_node)
-			return (ft_lstclear(&token_lst, &del_token),
-				del_token((void *)token), NULL);
+		{
+			ft_lstclear(&token_lst, &del_token);
+			del_token((void *)token);
+			return (NULL);
+		}
 		ft_lstadd_back(&token_lst, new_node);
 	}
 	return (token_lst);
