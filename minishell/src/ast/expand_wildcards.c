@@ -162,7 +162,7 @@ static void	process_wildcard_token(t_char_arr *new_result, const char *token)
 			append_to_result(new_result, matches.arr[j]);
 		free(matches.arr);
 	}
-	ft_free(pattern);
+	pattern = ft_free(pattern);
 }
 
 void	expand_wildcards(t_char_arr *result)

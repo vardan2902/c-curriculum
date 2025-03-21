@@ -24,7 +24,7 @@ static int	handle_fork_error(int pipefd[2])
 	return (-1);
 }
 
-static int	execute_pipe_side(t_ast *node, t_ht *env, int pipefd[2], int side)
+static int	execute_pipe_side(t_ast **node, t_ht *env, int pipefd[2], int side)
 {
 	pid_t	pid;
 
@@ -44,12 +44,13 @@ static void	ignore_signals(void)
 	struct sigaction	sa;
 
 	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGQUIT, &sa, NULL);
 }
 
-int	execute_pipe(t_ast *node, t_ht *env)
+int	execute_pipe(t_ast **node, t_ht *env)
 {
 	int					pipefd[2];
 	pid_t				left_pid;
@@ -59,10 +60,10 @@ int	execute_pipe(t_ast *node, t_ht *env)
 
 	if (pipe(pipefd))
 		return (perror("minishell: pipe"), -1);
-	left_pid = execute_pipe_side(node->left, env, pipefd, 0);
+	left_pid = execute_pipe_side(&(*node)->left, env, pipefd, 0);
 	if (left_pid < 0)
 		return (-1);
-	right_pid = execute_pipe_side(node->right, env, pipefd, 1);
+	right_pid = execute_pipe_side(&(*node)->right, env, pipefd, 1);
 	if (right_pid < 0)
 		return (kill(left_pid, SIGKILL), -1);
 	close(pipefd[0]);

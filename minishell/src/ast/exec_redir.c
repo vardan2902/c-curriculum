@@ -5,8 +5,10 @@ static t_char_arr	*expand_and_validate_target(const char *target, t_ht *env)
 	t_char_arr	*expanded;
 
 	expanded = expand_text(target, env);
-	if (!expanded || !expanded->arr || !*expanded->arr || !**expanded->arr)
+	if (!expanded)
 		return (NULL);
+	if (!expanded->arr || !*expanded->arr || !**expanded->arr)
+		return (free_char_arr(expanded), NULL);
 	expand_wildcards(expanded);
 	remove_quotes(expanded);
 	return (expanded);
@@ -34,7 +36,7 @@ static int	handle_redirection_error(t_char_arr *target)
 	err = ft_strjoin(": ", strerror(errno));
 	print_error("minishell: ", *target->arr, err);
 	free(err);
-	free(target->arr);
+	free_char_arr(target);
 	free(target);
 	return (1);
 }
@@ -69,7 +71,7 @@ int	handle_redirection(char *cmd, t_redirection *redir, t_ht *env)
 		close(fd);
 		return (handle_redirection_error(target));
 	}
-	free(target->arr);
+	free_char_arr(target);
 	free(target);
 	close(fd);
 	return (0);

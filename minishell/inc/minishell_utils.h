@@ -10,5 +10,6 @@ void		setup_signals(void);
 void		print_env(t_ht *env, int is_declare_list);
 void		save_std_fds(int *saved_stdin, int *saved_stdout);
 void		restore_std_fds(int saved_stdin, int saved_stdout);
+char    	*get_prompt_line();
 
 #endif

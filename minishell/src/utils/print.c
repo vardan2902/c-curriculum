@@ -26,6 +26,7 @@ static void	print_env_declare_list(t_ht *env)
 			printf("=\"%s\"\n", env_entries[i][1]);
 		else
 			printf("\n");
+		free(env_entries[i]);
 	}
 	free(env_entries);
 }

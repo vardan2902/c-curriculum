@@ -8,62 +8,68 @@ static char	*handle_heredoc(char *delimiter, t_ht *env)
 	bool		target_contains_quotes;
 	char 		*heredoc;
 	int			fd;
+	char		*sym;
 
 	int i = 0;
 	while (1)
 	{
-		char *sym = ft_itoa(i);
+		sym = ft_itoa(i);
 		heredoc = ft_strjoin(".heredoc_", sym);
-		if (access(heredoc, F_OK) == 0)
-		{
-			free(sym);
-			free(heredoc);
-			++i;
-			continue ;
-		}
 		free(sym);
-		fd = open(heredoc, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		target.size = 1;
-		target.arr = (char **)ft_calloc(2, sizeof (char *));
-		if (!target.arr)
+		if (!heredoc)
 			return (NULL);
-		target.arr[0] = ft_strdup(delimiter);
-		target_contains_quotes = ft_strchr(*target.arr, '\'') || ft_strchr(*target.arr, '"');
-		remove_quotes(&target);
-		is_not_a_tty = ht_get(env, "#ISNOTATTY");
-		while (1)
-		{
-			if (is_not_a_tty)
-				line = ft_strtrim(get_next_line(STDIN_FILENO), "\n"); // Memory leak
-			else
-				line = readline("> ");
-			if (!line || !ft_strcmp(line, *target.arr))
-				break ;
-			int	i = -1;
-			char *key;
-			char *value;
-			while (line[++i])
-			{
-				if (!target_contains_quotes && line[i] == '$')
-				{
-					key = extract_var_name(line, &i);
-					if (!key)
-						continue ;
-					value = ht_get(env, key);
-					free(key);
-					if (!value)
-						continue ;
-					ft_putstr_fd(value, fd);
-				}
-				else
-					ft_putchar_fd(line[i], fd);
-			}
-			ft_putchar_fd('\n', fd);
-			free(line);
-		}
-		close(fd);
-		break ;
+		if (access(heredoc, F_OK) != 0)
+			break ;
+		free(heredoc);
+		++i;
 	}
+	fd = open(heredoc, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	target.size = 1;
+	target.arr = (char **)ft_calloc(2, sizeof (char *));
+	if (!target.arr)
+		return (NULL);
+	target.arr[0] = ft_strdup(delimiter);
+	free(delimiter);
+	target_contains_quotes = ft_strchr(*target.arr, '\'') || ft_strchr(*target.arr, '"');
+	remove_quotes(&target);
+	is_not_a_tty = ht_get(env, "#ISNOTATTY");
+	while (1)
+	{
+		if (is_not_a_tty)
+			line = get_prompt_line();
+		else
+			line = readline("> ");
+		if (!line)
+			break ;
+		else if (!ft_strcmp(line, *target.arr))
+		{
+			free(line);
+			break ;
+		}
+		int	i = -1;
+		char *key;
+		char *value;
+		while (line[++i])
+		{
+			if (!target_contains_quotes && line[i] == '$')
+			{
+				key = extract_var_name(line, &i);
+				if (!key)
+					continue ;
+				value = ht_get(env, key);
+				free(key);
+				if (!value)
+					continue ;
+				ft_putstr_fd(value, fd);
+			}
+			else
+				ft_putchar_fd(line[i], fd);
+		}
+		ft_putchar_fd('\n', fd);
+		free(line);
+	}
+	free_char_arr(&target);
+	close(fd);
 	return (heredoc);
 }
 
@@ -92,12 +98,16 @@ static int	is_redir_valid(t_list **token_lst, t_token *token)
 static void	process_redirection_target(t_redirection *redir, t_list **token_lst, t_ht *env)
 {
 	char	*target;
+	t_list	*it;
 
 	target = ((t_token *)(*token_lst)->content)->value;
 	if (redir->type == T_HEREDOC)
 		target = handle_heredoc(target, env);
 	redir->target = target;
+	it = *token_lst;
 	*token_lst = (*token_lst)->next;
+	free(it->content);
+	free(it);
 }
 
 static int	add_redirection_to_cmd(t_cmd *cmd, t_redirection *redir)
@@ -130,20 +140,26 @@ int	ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env)
 			return (0);
 		it = *token_lst;
 		*token_lst = (*token_lst)->next;
-		free(((t_token *)it->content)->value);
-		free(it);
 		if (*token_lst)
 			token = (t_token *)(*token_lst)->content;
 		if (!is_redir_valid(token_lst, token))
 		{
+			free(((t_token *)it->content)->value);
 			free(redir);
+			free(it->content);
+			free(it);
+			if (prev)
+				prev->next = *token_lst;
 			return (0);
 		}
+		free(((t_token *)it->content)->value);
 		process_redirection_target(redir, token_lst, env);
 		if (prev)
 			prev->next = *token_lst;
 		if (!add_redirection_to_cmd(cmd, redir))
 			return (0);
+		free(it->content);
+		free(it);
 	}
 	return (1);
 }

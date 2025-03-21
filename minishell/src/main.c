@@ -100,7 +100,8 @@ void	process_prompt(char *line, t_ht *map)
 
 	if (*line == '\0')
 		return (free(line));
-	add_history(line);
+	if (!ht_get(map, "#ISNOTATTY"))
+		add_history(line);
 	token_lst = get_token_lst(line);
 	free(line);
 	if (!token_lst)
@@ -110,7 +111,7 @@ void	process_prompt(char *line, t_ht *map)
 	if (!ast)
 		return (ht_set(map, ft_strdup("?"), ft_strdup("2")));
 	// print_ast(ast, 0);
-	status = execute_ast(ast, map);
+	status = execute_ast(&ast, map);
 	status_str = ft_itoa((unsigned char)status);
 	ht_set(map, ft_strdup("?"), status_str);
 }

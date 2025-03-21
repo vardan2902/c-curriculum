@@ -1,24 +1,34 @@
 #include "minishell.h"
 
-void	free_ast_node(t_ast *node)
+void	*free_node(t_ast **node)
+{
+	if (node && *node)
+		free(*node);
+	*node = NULL;
+	return (NULL);
+}
+
+void	*free_ast_node(t_ast **node)
 {
 	int		i;
 
-	if (!node)
-		return ;
-	if (node->cmd)
+	if (!node || !*node)
+		return (NULL);
+	if ((*node)->cmd)
 	{
-		ft_lstclear(&node->cmd->redirections, del_redir);
+		ft_lstclear(&(*node)->cmd->redirections, del_redir);
 		i = -1;
-		if (node->cmd->args)
+		if ((*node)->cmd->args)
 		{
-			while (node->cmd->args[++i])
-				free(node->cmd->args[i]);
-			ft_free(node->cmd->args);
+			while ((*node)->cmd->args[++i])
+				ft_free((*node)->cmd->args[i]);
+			ft_free((*node)->cmd->args);
 		}
-		ft_free(node->cmd);
+		ft_free((*node)->cmd);
 	}
-	ft_free(node);
+	free_ast_node(&(*node)->left);
+	free_ast_node(&(*node)->right);
+	return (free_node(node));
 }
 
 static t_ast	*assign_operator_node(t_ast **root, t_list **token_lst, int indent)
@@ -37,6 +47,8 @@ static t_ast	*assign_operator_node(t_ast **root, t_list **token_lst, int indent)
 	op->token = ((t_token *)(*token_lst)->content)->type;
 	it = *token_lst;
 	*token_lst = (*token_lst)->next;
+	free(((t_token *)(it->content))->value);
+	free(it->content);
 	free(it);
 	*root = op;
 	return (*root);
@@ -124,24 +136,24 @@ t_ast	*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env)
 		token = (t_token *)(*token_lst)->content;
 		if (is_word_or_redir(token->type))
 		{
-			if (!ast_add_cmd(ast, token_lst, env))
-				return (free_ast_node(ast), NULL);
+			if (!ast_add_cmd(&ast, token_lst, env))
+				return (free_ast_node(&ast));
 		}
 		else if (is_operation(token->type))
 		{
 			if (!ast_add_logical_operator(&ast, token_lst, indent))
-				return (free_ast_node(ast), NULL);
+				return (free_ast_node(&ast));
 		}
 		else if (token->type == T_OPEN_PARENTHESIS)
 		{
 			if (!ast_process_parentheses(&ast, token_lst, indent + 1, env))
-				return (free_ast_node(ast), NULL);
+				return (free_ast_node(&ast));
 		}
 		else if (token->type == T_CLOSE_PARENTHESIS)
 		{
 			if (ast->token == T_NONE || !indent)
 			{
-				free_ast_node(ast);
+				free_ast_node(&ast);
 				print_syntax_error(")");
 				return (NULL);
 			}
@@ -150,7 +162,7 @@ t_ast	*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env)
 	}
 	if (indent != 0)
 	{
-		free_ast_node(ast);
+		free_ast_node(&ast);
 		print_syntax_error("(");
 		return (NULL);
 	}

@@ -70,5 +70,6 @@ void	remove_node(t_ht *map, t_ht_node *node, t_ht_node *prev, size_t index)
 	else
 		prev->next = node->next;
 	free(node->key);
+	free(node->value);
 	free(node);
 }
