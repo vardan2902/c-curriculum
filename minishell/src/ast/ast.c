@@ -104,22 +104,34 @@ static t_ast	*ast_process_parentheses(t_ast **ast, t_list **token_lst,
 		return (NULL);
 	it = *token_lst;
 	*token_lst = (*token_lst)->next;
-	del_token(it);
+	del_token(it->content);
+	free(it);
 	sub_ast = ast_create_from_tokens(token_lst, indent, env);
 	if (!(*token_lst) || !sub_ast)
 		return (NULL);
 	sub_ast->is_subshell = true;
 	token = (t_token *)(*token_lst)->content;
 	if (*token_lst && token && token->type == T_CLOSE_PARENTHESIS)
+	{
+		it = *token_lst;
 		*token_lst = (*token_lst)->next;
+		del_token(it->content);
+		free(it);
+	}
 	else
 		return (NULL);
 	if ((*ast)->token == T_NONE)
+	{
+		free(*ast);
 		*ast = sub_ast;
+	}
 	else if (!(*ast)->left)
 		(*ast)->left = sub_ast;
 	else
+	{
+		free((*ast)->right);
 		(*ast)->right = sub_ast;
+	}
 	return (sub_ast);
 }
 

@@ -206,7 +206,7 @@ int	execute_command(t_ast **node, t_ht *env)
 	}
 }
 
-static int	execute_ast_impl(t_ast **node, t_ht *env)
+static int	execute_ast_impl(t_ast **root, t_ast **node, t_ht *env)
 {
 	int		status;
 	char	*status_str;
@@ -223,29 +223,23 @@ static int	execute_ast_impl(t_ast **node, t_ht *env)
 	}
 	if ((*node)->token == T_PIPE)
 	{
-		status = execute_pipe(node, env);
-		free_ast_node(&(*node)->left);
-		free_ast_node(&(*node)->right);
+		status = execute_pipe(root, node, env);
 		free_ast_node(node);
 		return (status);
 	}
 	if ((*node)->token == T_AND)
 	{
-		status = execute_ast(&(*node)->left, env);
+		status = execute_ast(root, &(*node)->left, env);
 		if (status == 0)
-			status = execute_ast(&(*node)->right, env);
-		free_ast_node(&(*node)->left);
-		free_ast_node(&(*node)->right);
+			status = execute_ast(root, &(*node)->right, env);
 		free_ast_node(node);
 		return (status);
 	}
 	if ((*node)->token == T_OR)
 	{
-		status = execute_ast(&(*node)->left, env);
+		status = execute_ast(root, &(*node)->left, env);
 		if (status != 0)
-			status = execute_ast(&(*node)->right, env);
-		free_ast_node(&(*node)->left);
-		free_ast_node(&(*node)->right);
+			status = execute_ast(root, &(*node)->right, env);
 		free_ast_node(node);
 		return (status);
 	}
@@ -261,7 +255,7 @@ void	del_redir(void *arg)
 	free(redir);
 }
 
-int	execute_ast(t_ast **node, t_ht *env)
+int	execute_ast(t_ast **root, t_ast **node, t_ht *env)
 {
 	pid_t   			pid;
 	int	 				status;
@@ -275,9 +269,12 @@ int	execute_ast(t_ast **node, t_ht *env)
 		if (pid == 0)
 		{
 			ht_set(env, ft_strdup("#IS_SUBSHELL"), ft_strdup("TRUE"));
-			status = execute_ast_impl(node, env);
+			status = execute_ast_impl(root, node, env);
+			ht_clear(env);
+			free_ast_node(root);
 			exit(status);
 		}
+		free_ast_node(node);
 		if (pid < 0)
 			return (1);
 		sigemptyset(&sa.sa_mask);
@@ -291,6 +288,6 @@ int	execute_ast(t_ast **node, t_ht *env)
 			return (WEXITSTATUS(status));
 		return (1);
 	}
-	status = execute_ast_impl(node, env);
+	status = execute_ast_impl(root, node, env);
 	return (status);
 }

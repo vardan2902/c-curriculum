@@ -38,7 +38,7 @@ struct s_ast
 };
 
 t_ast		*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env);
-int			execute_ast(t_ast **node, t_ht *env);
+int			execute_ast(t_ast **root, t_ast **node, t_ht *env);
 int			get_precedence(int token);
 t_ast		*ast_create_root(void);
 int			is_redir(t_cmd_token_types type);
@@ -59,7 +59,7 @@ void		*free_ast_node(t_ast **node);
 
 void		append_str(char **result, const char *str);
 
-int		execute_pipe(t_ast **node, t_ht *env);
+int		execute_pipe(t_ast **root, t_ast **node, t_ht *env);
 
 
 void	init_char_arr(t_char_arr *arr);
