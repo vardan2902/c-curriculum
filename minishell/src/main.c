@@ -6,105 +6,13 @@
 /*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/23 19:17:54 by vapetros          #+#    #+#             */
-/*   Updated: 2025/03/24 18:35:52 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/03/24 18:41:19 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
 extern sig_atomic_t	g_signal_int;
-
-/*
-TODO: remove after Yulya understand AST part
-void print_node(t_ast *node, int level)
-{
-    for (int i = 0; i < level; i++)
-        printf("  "); // Indent based on the level
-
-    if (!node)
-    {
-        printf("(null)\n");
-        return;
-    }
-
-    switch (node->token)
-    {
-    case T_CMD:
-	{
-		if (node->cmd)
-		{
-			printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
-			int i = -1;
-			for (int i = 0; i < level; i++)
-				printf("  ");
-			printf("ARGS: ");
-			while (node->cmd->args[++i])
-				printf("%s, ", node->cmd->args[i]);
-			printf("\n");
-			for (int i = 0; i < level; i++)
-				printf("  ");
-			printf("REDIRS: ");
-			if (node->cmd->redirections)
-			{
-				t_list *tmp = node->cmd->redirections;
-
-				while (tmp)
-				{
-					t_redirection *redir = ((t_redirection *)(tmp->content));
-					if (redir->type == T_HEREDOC)
-						printf("T_HEREDOC");
-					else if (redir->type == T_INPUT)
-						printf("T_INPUT");
-					else if (redir->type == T_APPEND)
-						printf("T_APPEND");
-					else if (redir->type == T_OUTPUT)
-							printf("T_OUTPUT");
-					printf(" (%s)", redir->target);
-					tmp = tmp->next;
-				}
-			}
-			printf("\n");
-		}
-        break;
-	}
-	case T_PIPE:
-        printf("PIPE\n");
-        break;
-    case T_AND:
-        printf("AND\n");
-        break;
-    case T_OR:
-        printf("OR\n");
-        break;
-    case T_NONE:
-        printf("NONE\n");
-        break;
-    default:
-        printf("UNKNOWN\n");
-        break;
-    }
-
-    if (node->is_subshell)
-    {
-        for (int i = 0; i < level + 1; i++)
-            printf("  ");
-        printf("(subshell)\n");
-    }
-}
-
-void print_ast(t_ast *node, int level)
-{
-    if (!node)
-        return;
-
-    // Print the current node
-    print_node(node, level);
-
-    // Recursively print the left and right children
-    print_ast(node->left, level + 1);
-    print_ast(node->right, level + 1);
-}
-*/
 
 void	process_prompt(char *line, t_ht *map)
 {

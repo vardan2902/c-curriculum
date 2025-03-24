@@ -6,7 +6,7 @@
 /*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/24 18:05:55 by vapetros          #+#    #+#             */
-/*   Updated: 2025/03/24 18:31:44 by vapetros         ###   ########.fr       */
+/*   Updated: 2025/03/24 19:33:21 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ int	validate_name(t_ast **node)
 	}
 	else if (is_builtin(unquoted.arr[0]))
 		status = -2;
+	free_char_arr(&unquoted);
 	return (status);
 }
 
