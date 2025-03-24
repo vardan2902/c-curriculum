@@ -1,40 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   unset.c                                            :+:      :+:    :+:   */
+/*   exec.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/23 19:42:48 by vapetros          #+#    #+#             */
-/*   Updated: 2025/03/23 19:42:51 by vapetros         ###   ########.fr       */
+/*   Created: 2025/03/24 18:27:10 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 18:27:52 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	check_var_name(char *name)
+void	shift_args(t_ast **node)
 {
 	int	i;
 
-	if (!name || (!ft_isalpha(name[0]) && name[0] != '_'))
-		return (1);
-	i = 0;
-	while (name[i] && (ft_isalnum(name[i]) || name[i] == '_'))
-		++i;
-	return (name[i] != '\0');
+	i = -1;
+	while ((*node)->cmd->args[++i])
+		(*node)->cmd->args[i] = (*node)->cmd->args[i + 1];
 }
 
-int	ft_unset(char **args, t_ht *env)
+int	find_last_index(char **args)
 {
-	int	i;
+	int	last;
 
-	args += 1;
-	i = -1;
-	while (args[++i])
-	{
-		if (check_var_name(args[i]))
-			continue ;
-		ht_remove_entry(env, args[i]);
-	}
-	return (0);
+	last = 0;
+	while (args[last])
+		++last;
+	return (last);
 }

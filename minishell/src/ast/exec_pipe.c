@@ -1,20 +1,16 @@
-#include "minishell.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_pipe.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 20:28:45 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 16:15:25 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-static void	setup_pipe_for_child(int pipefd[2], int side)
-{
-	if (side == 0)
-	{
-		close(pipefd[0]);
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
-	}
-	else
-	{
-		close(pipefd[1]);
-		dup2(pipefd[0], STDIN_FILENO);
-		close(pipefd[0]);
-	}
-}
+#include "minishell.h"
 
 static int	handle_fork_error(int pipefd[2])
 {
@@ -24,7 +20,8 @@ static int	handle_fork_error(int pipefd[2])
 	return (-1);
 }
 
-static int	execute_pipe_side(t_ast **root, t_ast **node, t_ht *env, int pipefd[2], int side)
+static int	execute_pipe_left_side(t_ast **root, t_ast **node,
+	t_ht *env, int pipefd[2])
 {
 	pid_t	pid;
 	int		status;
@@ -32,7 +29,9 @@ static int	execute_pipe_side(t_ast **root, t_ast **node, t_ht *env, int pipefd[2
 	pid = fork();
 	if (pid == 0)
 	{
-		setup_pipe_for_child(pipefd, side);
+		close(pipefd[0]);
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
 		status = execute_ast(root, node, env);
 		ht_clear(env);
 		free_ast_node(root);
@@ -43,31 +42,42 @@ static int	execute_pipe_side(t_ast **root, t_ast **node, t_ht *env, int pipefd[2
 	return (pid);
 }
 
-static void	ignore_signals(void)
+static int	execute_pipe_right_side(t_ast **root, t_ast **node,
+	t_ht *env, int pipefd[2])
 {
-	struct sigaction	sa;
+	pid_t	pid;
+	int		status;
 
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGQUIT, &sa, NULL);
+	pid = fork();
+	if (pid == 0)
+	{
+		close(pipefd[1]);
+		dup2(pipefd[0], STDIN_FILENO);
+		close(pipefd[0]);
+		status = execute_ast(root, node, env);
+		ht_clear(env);
+		free_ast_node(root);
+		exit(status);
+	}
+	else if (pid < 0)
+		return (handle_fork_error(pipefd));
+	return (pid);
 }
 
-int	execute_pipe(t_ast **root, t_ast **node, t_ht *env)
+int	handle_pipe_exec(t_ast **root, t_ast **node, t_ht *env)
 {
-	int					pipefd[2];
-	pid_t				left_pid;
-	pid_t				right_pid;
-	int					left_status;
-	int					right_status;
+	int		pipefd[2];
+	pid_t	left_pid;
+	pid_t	right_pid;
+	int		left_status;
+	int		right_status;
 
 	if (pipe(pipefd))
 		return (perror("minishell: pipe"), -1);
-	left_pid = execute_pipe_side(root, &(*node)->left, env, pipefd, 0);
+	left_pid = execute_pipe_left_side(root, &(*node)->left, env, pipefd);
 	if (left_pid < 0)
 		return (-1);
-	right_pid = execute_pipe_side(root, &(*node)->right, env, pipefd, 1);
+	right_pid = execute_pipe_right_side(root, &(*node)->right, env, pipefd);
 	if (right_pid < 0)
 		return (kill(left_pid, SIGKILL), -1);
 	close(pipefd[0]);

@@ -1,58 +1,57 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ast_cmd.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 19:55:27 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 18:31:43 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static void	update_token(t_ast *it, t_token *token,
-	t_list **prev_token, t_list **token_lst)
+static ssize_t	process_cmd_tokens(t_ast *it, t_list **token_lst,
+	t_list **token_it, t_ht *env)
 {
-	*prev_token = *token_lst;
-	if (!it->cmd->name)
-		it->cmd->name = token->value;
-}
-
-static int	process_cmd_tokens(t_ast *it, t_list **token_lst,
-	t_list **token_it, size_t *size, t_ht *env)
-{
-	t_token				*token;
-	t_list				*prev_token;
-	t_cmd_token_types	type;
+	t_cmd_token	ct;
 
 	*token_it = NULL;
-	prev_token = NULL;
-	token = (t_token *)(*token_lst)->content;
-	while (*token_lst && token && is_word_or_redir(token->type))
+	init_ct(&ct, (t_token *)(*token_lst)->content);
+	while (*token_lst && ct.token && is_word_or_redir(ct.token->type))
 	{
-		type = token->type;
-		if (is_redir(type)
-			&& !ast_add_redirection(it->cmd, token_lst, prev_token, env))
-			return (0);
-		else if (type == T_WORD)
+		ct.type = ct.token->type;
+		if (is_redir(ct.type)
+			&& !ast_add_redirection(it->cmd, token_lst, ct.prev_token, env))
+			return (-1);
+		else if (ct.type == T_WORD)
 		{
-			++*size;
+			++ct.size;
 			if (!*token_it)
 				*token_it = *token_lst;
-			update_token(it, token, &prev_token, token_lst);
+			update_token(it, ct.token, &ct.prev_token, token_lst);
 			*token_lst = (*token_lst)->next;
 		}
 		if (*token_lst && (*token_lst)->content)
-			token = (t_token *)(*token_lst)->content;
+			ct.token = (t_token *)(*token_lst)->content;
 		else
-			token = NULL;
+			ct.token = NULL;
 	}
-	return (1);
+	return (ct.size);
 }
 
 static int	add_cmd(t_ast **it, t_list **token_lst, t_ht *env)
 {
 	t_list	*token_it;
-	size_t	size;
-	size_t	i;
+	ssize_t	size;
 
-	size = 0;
 	(*it)->token = T_CMD;
 	(*it)->cmd = (t_cmd *)ft_calloc(1, sizeof (t_cmd));
-	token_it = NULL;
 	if (!(*it)->cmd)
 		return (0);
-	if (!process_cmd_tokens(*it, token_lst, &token_it, &size, env))
+	size = process_cmd_tokens(*it, token_lst, &token_it, env);
+	if (size == -1)
 	{
 		if (token_it)
 			*token_lst = token_it;
@@ -64,15 +63,7 @@ static int	add_cmd(t_ast **it, t_list **token_lst, t_ht *env)
 	(*it)->cmd->args = (char **)malloc((size + 1) * sizeof (char *));
 	if (!(*it)->cmd->args)
 		return (free((*it)->cmd), 0);
-	i = -1;
-	while (++i < size)
-	{
-		(*it)->cmd->args[i] = ((t_token *)((*token_lst)->content))->value;
-		token_it = *token_lst;
-		*token_lst = (*token_lst)->next;
-		free(token_it->content);
-		free(token_it);
-	}
+	process_args(it, token_lst, token_it, size);
 	(*it)->cmd->args[size] = NULL;
 	return (1);
 }

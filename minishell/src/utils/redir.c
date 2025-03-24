@@ -1,40 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   unset.c                                            :+:      :+:    :+:   */
+/*   redir.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/23 19:42:48 by vapetros          #+#    #+#             */
-/*   Updated: 2025/03/23 19:42:51 by vapetros         ###   ########.fr       */
+/*   Created: 2025/03/24 15:49:25 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 15:49:33 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	check_var_name(char *name)
+t_redirection	*create_redirection(t_cmd_token_types type)
 {
-	int	i;
+	t_redirection	*redir;
 
-	if (!name || (!ft_isalpha(name[0]) && name[0] != '_'))
-		return (1);
-	i = 0;
-	while (name[i] && (ft_isalnum(name[i]) || name[i] == '_'))
-		++i;
-	return (name[i] != '\0');
+	redir = (t_redirection *)malloc(sizeof(t_redirection));
+	if (!redir)
+		return (NULL);
+	redir->type = type;
+	redir->target = NULL;
+	return (redir);
 }
 
-int	ft_unset(char **args, t_ht *env)
+int	is_redir_valid(t_list **token_lst, t_token *token)
 {
-	int	i;
-
-	args += 1;
-	i = -1;
-	while (args[++i])
-	{
-		if (check_var_name(args[i]))
-			continue ;
-		ht_remove_entry(env, args[i]);
-	}
-	return (0);
+	if (!*token_lst)
+		return (print_syntax_error("newline"), 0);
+	if (token->type != T_WORD)
+		return (print_syntax_error(token->value), 0);
+	return (1);
 }

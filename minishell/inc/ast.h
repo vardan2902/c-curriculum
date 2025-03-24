@@ -1,77 +1,41 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ast.h                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 19:15:30 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 17:13:56 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef AST_H
 # define AST_H
 
-# include "minishell.h"
-
-typedef struct s_cmd			t_cmd;
-typedef struct s_redirection	t_redirection;
-typedef struct s_ast			t_ast;
-typedef struct s_char_arr		t_char_arr;
-
-struct s_redirection
-{
-	t_cmd_token_types	type;
-	char				*target;
-};
-
-struct s_cmd
-{
-	char	*name;
-	char	**args;
-	t_list	*redirections;
-};
-
-struct s_char_arr
-{
-	char	**arr;
-	size_t	size;
-};
-
-struct s_ast
-{
-	t_cmd_token_types	token;
-	t_cmd				*cmd;
-	t_ast				*left;
-	t_ast				*right;
-	int					indent;
-	bool				is_subshell;
-};
-
-t_ast		*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env);
-int			execute_ast(t_ast **root, t_ast **node, t_ht *env);
-int			get_precedence(int token);
-t_ast		*ast_create_root(void);
-int			is_redir(t_cmd_token_types type);
-int			is_word_or_redir(t_cmd_token_types type);
-int			is_operation(t_cmd_token_types type);
-int			ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env);
-int			ast_add_cmd(t_ast **it, t_list **token_lst, t_ht *env);
-int			handle_redirections_and_restore(t_cmd *cmd,
+bool	is_redir(t_cmd_token_types type);
+bool	is_word_or_redir(t_cmd_token_types type);
+bool	is_operation(t_cmd_token_types type);
+bool	are_parentheses_valid(t_ast **ast, t_list **token_lst);
+int		get_precedence(int token);
+t_ast	*ast_create_root(void);
+t_ast	*ast_create_from_tokens(t_list **token_lst, int indent, t_ht *env);
+int		ast_add_cmd(t_ast **it, t_list **token_lst, t_ht *env);
+int		ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev,
+			t_ht *env);
+int		ast_process_parentheses(t_ast **ast, t_list **token_lst,
+			int indent, t_ht *env);
+int		handle_redirection(char *cmd, t_redirection *redir, t_ht *env);
+int		handle_redirections_and_restore(t_cmd *cmd,
 			t_ht *env, int saved_stdin, int saved_stdout);
-int			exec_builtin(t_ast **node, t_ht *env);
-char		*extract_var_name(const char *token, int *i);
-t_char_arr	*expand_text(const char *token, t_ht *env);
-void		expand_wildcards(t_char_arr *result);
-void		remove_quotes(t_char_arr *result);
-void		append_to_result(t_char_arr *arr, char *new_item);
-int			handle_redirections(t_cmd *cmd, t_ht *env);
-void		*free_ast_node(t_ast **node);
-
-void		append_str(char **result, const char *str);
-
-int		execute_pipe(t_ast **root, t_ast **node, t_ht *env);
-
-
-void	init_char_arr(t_char_arr *arr);
-void	free_char_arr(t_char_arr *arr);
-void	*ft_free(void *ptr);
-
-void	free_char_matrix(char **matrix);
-void	append_str(char **result, const char *str);
-void	append_to_result(t_char_arr *arr, char *new_item);
-void	split_and_append(t_char_arr *result, const char *str);
-bool 	is_builtin(const char *cmd);
-char	*build_cmd_path(char *cmd, t_ht *env, int *status);
-void	del_redir(void *arg);
+int		execute_ast(t_ast **root, t_ast **node, t_ht *env);
+int		exec_builtin(t_ast **node, t_ht *env);
+void	exec_non_builtin(t_ast **node, t_ht *env);
+int		execute_command(t_ast **node, t_ht *env);
+int		handle_cmd_exec(t_ast **node, t_ht *env);
+int		handle_or_exec(t_ast **root, t_ast **node, t_ht *env);
+int		handle_and_exec(t_ast **root, t_ast **node, t_ht *env);
+int		handle_pipe_exec(t_ast **root, t_ast **node, t_ht *env);
+void	*free_ast_node(t_ast **node);
 
 #endif

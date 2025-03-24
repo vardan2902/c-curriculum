@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ast_utils.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 20:21:26 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/23 20:21:49 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 int	get_precedence(int token)
@@ -17,17 +29,17 @@ t_ast	*ast_create_root(void)
 	return (root);
 }
 
-int	is_redir(t_cmd_token_types type)
+bool	is_redir(t_cmd_token_types type)
 {
 	return (type >= T_INPUT && type <= T_HEREDOC);
 }
 
-int	is_word_or_redir(t_cmd_token_types type)
+bool	is_word_or_redir(t_cmd_token_types type)
 {
 	return (type == T_WORD || is_redir(type));
 }
 
-int	is_operation(t_cmd_token_types type)
+bool	is_operation(t_cmd_token_types type)
 {
 	return (type == T_OR || type == T_AND
 		|| type == T_PIPE || type == T_UNHANDLED);

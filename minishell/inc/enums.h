@@ -1,10 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   enums.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 19:12:21 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 15:12:36 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef ENUMS_H
 # define ENUMS_H
 
-# include "minishell.h"
-
 typedef enum e_cmd_token_types	t_cmd_token_types;
-typedef enum e_redirections		t_redirections;
 typedef enum e_quoting_state	t_quoting_state;
 
 enum e_cmd_token_types

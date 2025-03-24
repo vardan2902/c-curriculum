@@ -1,40 +1,43 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   unset.c                                            :+:      :+:    :+:   */
+/*   ht_clear.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/23 19:42:48 by vapetros          #+#    #+#             */
-/*   Updated: 2025/03/23 19:42:51 by vapetros         ###   ########.fr       */
+/*   Created: 2025/03/23 19:39:59 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/23 19:41:06 by vapetros         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	check_var_name(char *name)
+static void	del_ht_node(t_ht_node *node)
 {
-	int	i;
-
-	if (!name || (!ft_isalpha(name[0]) && name[0] != '_'))
-		return (1);
-	i = 0;
-	while (name[i] && (ft_isalnum(name[i]) || name[i] == '_'))
-		++i;
-	return (name[i] != '\0');
+	free(node->key);
+	if (node->value)
+		free(node->value);
+	free(node);
 }
 
-int	ft_unset(char **args, t_ht *env)
+static void	ht_clear_slot(t_ht_node **lst)
 {
-	int	i;
+	t_ht_node	*temp;
 
-	args += 1;
-	i = -1;
-	while (args[++i])
+	while (*lst)
 	{
-		if (check_var_name(args[i]))
-			continue ;
-		ht_remove_entry(env, args[i]);
+		temp = (*lst)->next;
+		del_ht_node(*lst);
+		*lst = temp;
 	}
-	return (0);
+}
+
+void	ht_clear(t_ht *map)
+{
+	size_t	i;
+
+	i = -1;
+	while (++i < map->size)
+		ht_clear_slot(&map->table[i]);
+	free(map->table);
 }

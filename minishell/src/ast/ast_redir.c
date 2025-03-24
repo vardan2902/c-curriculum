@@ -1,101 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ast_redir.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/24 14:58:37 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 15:51:55 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-static char	*handle_heredoc(char *delimiter, t_ht *env)
-{
-	char		*line;
-	bool		is_not_a_tty;
-	t_char_arr	target;
-	bool		target_contains_quotes;
-	char 		*heredoc;
-	int			fd;
-	char		*sym;
-
-	int i = 0;
-	while (1)
-	{
-		sym = ft_itoa(i);
-		heredoc = ft_strjoin(".heredoc_", sym);
-		free(sym);
-		if (!heredoc)
-			return (NULL);
-		if (access(heredoc, F_OK) != 0)
-			break ;
-		free(heredoc);
-		++i;
-	}
-	fd = open(heredoc, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	target.size = 1;
-	target.arr = (char **)ft_calloc(2, sizeof (char *));
-	if (!target.arr)
-		return (NULL);
-	target.arr[0] = ft_strdup(delimiter);
-	free(delimiter);
-	target_contains_quotes = ft_strchr(*target.arr, '\'') || ft_strchr(*target.arr, '"');
-	remove_quotes(&target);
-	is_not_a_tty = ht_get(env, "#ISNOTATTY");
-	while (1)
-	{
-		if (is_not_a_tty)
-			line = get_prompt_line();
-		else
-			line = readline("> ");
-		if (!line)
-			break ;
-		else if (!ft_strcmp(line, *target.arr))
-		{
-			free(line);
-			break ;
-		}
-		int	i = -1;
-		char *key;
-		char *value;
-		while (line[++i])
-		{
-			if (!target_contains_quotes && line[i] == '$')
-			{
-				key = extract_var_name(line, &i);
-				if (!key)
-					continue ;
-				value = ht_get(env, key);
-				free(key);
-				if (!value)
-					continue ;
-				ft_putstr_fd(value, fd);
-			}
-			else
-				ft_putchar_fd(line[i], fd);
-		}
-		ft_putchar_fd('\n', fd);
-		free(line);
-	}
-	free_char_arr(&target);
-	close(fd);
-	return (heredoc);
-}
-
-
-static t_redirection	*create_redirection(t_cmd_token_types type)
-{
-	t_redirection	*redir;
-
-	redir = (t_redirection *)malloc(sizeof(t_redirection));
-	if (!redir)
-		return (NULL);
-	redir->type = type;
-	redir->target = NULL;
-	return (redir);
-}
-
-static int	is_redir_valid(t_list **token_lst, t_token *token)
-{
-	if (!*token_lst)
-		return (print_syntax_error("newline"), 0);
-	if (token->type != T_WORD)
-		return (print_syntax_error(token->value), 0);
-	return (1);
-}
-
-static void	process_redirection_target(t_redirection *redir, t_list **token_lst, t_ht *env)
+static void	process_redirection_target(t_redirection *redir,
+	t_list **token_lst, t_ht *env)
 {
 	char	*target;
 	t_list	*it;
@@ -125,6 +43,27 @@ static int	add_redirection_to_cmd(t_cmd *cmd, t_redirection *redir)
 	return (1);
 }
 
+static int	process_invalid_redirection(t_list *it, t_redirection *redir,
+	t_list **token_lst, t_list *prev)
+{
+	free(((t_token *)it->content)->value);
+	free(redir);
+	free(it->content);
+	free(it);
+	if (prev)
+		prev->next = *token_lst;
+	return (0);
+}
+
+static void	next_token_iteration(t_list **token_lst, t_list **token_it,
+	t_token **token)
+{
+	*token_it = *token_lst;
+	*token_lst = (*token_lst)->next;
+	if (*token_lst)
+		*token = (t_token *)(*token_lst)->content;
+}
+
 int	ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env)
 {
 	t_redirection	*redir;
@@ -138,20 +77,9 @@ int	ast_add_redirection(t_cmd *cmd, t_list **token_lst, t_list *prev, t_ht *env)
 		redir = create_redirection(token->type);
 		if (!redir)
 			return (0);
-		it = *token_lst;
-		*token_lst = (*token_lst)->next;
-		if (*token_lst)
-			token = (t_token *)(*token_lst)->content;
+		next_token_iteration(token_lst, &it, &token);
 		if (!is_redir_valid(token_lst, token))
-		{
-			free(((t_token *)it->content)->value);
-			free(redir);
-			free(it->content);
-			free(it);
-			if (prev)
-				prev->next = *token_lst;
-			return (0);
-		}
+			return (process_invalid_redirection(it, redir, token_lst, prev));
 		free(((t_token *)it->content)->value);
 		process_redirection_target(redir, token_lst, env);
 		if (prev)

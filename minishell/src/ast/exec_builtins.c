@@ -1,25 +1,16 @@
-#include "minishell.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_builtins.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 20:32:22 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/23 20:35:46 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-static int	(*get_builtin(char *cmd))(char **args, t_ht *env)
-{
-	if (!cmd)
-		return (NULL);
-	if (!ft_strcmp(cmd, "echo"))
-		return (&ft_echo);
-	if (!ft_strcmp(cmd, "pwd"))
-		return (&ft_pwd);
-	if (!ft_strcmp(cmd, "cd"))
-		return (&ft_cd);
-	if (!ft_strcmp(cmd, "unset"))
-		return (&ft_unset);
-	if (!ft_strcmp(cmd, "exit"))
-		return (&ft_exit);
-	if (!ft_strcmp(cmd, "env"))
-		return (&ft_env);
-	if (!ft_strcmp(cmd, "export"))
-		return (&ft_export);
-	return (NULL);
-}
+#include "minishell.h"
 
 static int	expand_and_append_args(t_char_arr *args, char *arg,
 	t_ht *env, int is_export)
@@ -61,7 +52,7 @@ static int	process_cmd_args(t_ast *node, t_char_arr *args, t_ht *env)
 	{
 		if (expand_and_append_args(args, node->cmd->args[i], env,
 				ft_strcmp(args->arr[0], "export") == 0))
-					return (127);
+			return (127);
 	}
 	return (0);
 }
@@ -73,6 +64,14 @@ static void	set_env_vars(t_ht *env, t_char_arr *args, int status)
 	ht_set(env, ft_strdup("_"), ft_strdup(args->arr[args->size - 1]));
 	status_str = ft_itoa(status);
 	ht_set(env, ft_strdup("?"), status_str);
+}
+
+int	free_and_restore(t_char_arr *args, int saved_stdin, int saved_stdout)
+{
+	free_char_arr(args);
+	free(args);
+	restore_std_fds(saved_stdin, saved_stdout);
+	return (127);
 }
 
 int	exec_builtin(t_ast **node, t_ht *env)
@@ -90,12 +89,7 @@ int	exec_builtin(t_ast **node, t_ht *env)
 	if (!args)
 		return (1);
 	if (process_cmd_args((*node), args, env) != 0)
-	{
-		free_char_arr(args);
-		free(args);
-		restore_std_fds(saved_stdin, saved_stdout);
-		return (127);
-	}
+		return (free_and_restore(args, saved_stdin, saved_stdout));
 	ht_set(env, ft_strdup("_"), ft_strdup(args->arr[0]));
 	status = (get_builtin(args->arr[0]))(args->arr, env);
 	set_env_vars(env, args, status);

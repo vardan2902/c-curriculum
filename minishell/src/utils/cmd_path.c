@@ -1,4 +1,36 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cmd_path_utils.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 20:13:36 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/23 20:17:34 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
+
+static void	handle_error_cases(char *result, char *cmd, int *status,
+	struct stat *st)
+{
+	if (access(result, F_OK) == -1)
+	{
+		print_error("minishell: ", cmd, ": No such file or directory");
+		*status = 127;
+	}
+	else if (stat(result, st) == 0 && S_ISDIR(st->st_mode))
+	{
+		print_error("minishell: ", cmd, ": is a directory");
+		*status = 126;
+	}
+	else if (access(result, X_OK) != 0)
+	{
+		print_error("minishell: ", cmd, ": Permission denied");
+		*status = 126;
+	}
+}
 
 static char	*handle_relative_absolute_path(char *cmd, int *status)
 {
@@ -9,21 +41,7 @@ static char	*handle_relative_absolute_path(char *cmd, int *status)
 	if (!result)
 		return (NULL);
 	*status = 0;
-	if (access(result, F_OK) == -1)
-	{
-		print_error("minishell: ", cmd, ": No such file or directory");
-		*status = 127;
-	}
-	else if (stat(result, &st) == 0 && S_ISDIR(st.st_mode))
-	{
-		print_error("minishell: ", cmd, ": is a directory");
-		*status = 126;
-	}
-	else if (access(result, X_OK) != 0)
-	{
-		print_error("minishell: ", cmd, ": Permission denied");
-		*status = 126;
-	}
+	handle_error_cases(result, cmd, status, &st);
 	if (*status == 0)
 		return (result);
 	free(result);

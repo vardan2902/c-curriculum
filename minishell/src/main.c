@@ -1,7 +1,21 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 19:17:54 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/24 18:35:52 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-extern volatile sig_atomic_t	g_signal_int;
+extern sig_atomic_t	g_signal_int;
 
+/*
+TODO: remove after Yulya understand AST part
 void print_node(t_ast *node, int level)
 {
     for (int i = 0; i < level; i++)
@@ -22,13 +36,13 @@ void print_node(t_ast *node, int level)
 			printf("CMD: %s\n", node->cmd ? node->cmd->name : "(null)");
 			int i = -1;
 			for (int i = 0; i < level; i++)
-				printf("  ");	
+				printf("  ");
 			printf("ARGS: ");
 			while (node->cmd->args[++i])
 				printf("%s, ", node->cmd->args[i]);
 			printf("\n");
 			for (int i = 0; i < level; i++)
-				printf("  ");	
+				printf("  ");
 			printf("REDIRS: ");
 			if (node->cmd->redirections)
 			{
@@ -90,6 +104,7 @@ void print_ast(t_ast *node, int level)
     print_ast(node->left, level + 1);
     print_ast(node->right, level + 1);
 }
+*/
 
 void	process_prompt(char *line, t_ht *map)
 {
@@ -110,69 +125,38 @@ void	process_prompt(char *line, t_ht *map)
 	ft_lstclear(&token_lst, del_token);
 	if (!ast)
 		return (ht_set(map, ft_strdup("?"), ft_strdup("2")));
-	// print_ast(ast, 0);
 	status = execute_ast(&ast, &ast, map);
 	status_str = ft_itoa((unsigned char)status);
 	ht_set(map, ft_strdup("?"), status_str);
 }
 
-char	*get_prompt_line()
+int	process_not_tty_prompt(t_ht *map)
 {
 	char	*line;
-	char	*trimmed;
+	int		status;
 
-	line = get_next_line(STDIN_FILENO);
-	trimmed = ft_strtrim(line, "\n");
-	free(line);
-	return (trimmed);
-}
-
-void	unlink_heredocs()
-{
-	int	i;
-	char *sym;
-	char *heredoc;
-
-	i = 0;
-	while (1)
+	ht_set(map, ft_strdup("#ISNOTATTY"), ft_strdup("TRUE"));
+	line = get_prompt_line();
+	while (line)
 	{
-		sym = ft_itoa(i);
-		heredoc = ft_strjoin(".heredoc_", sym);
-		if (access(heredoc, F_OK) == -1)
-			break ;
-		free(sym);
-		unlink(heredoc);
-		free(heredoc);
-		++i;
+		g_signal_int = 0;
+		if (!line)
+			return (0);
+		process_prompt(line, map);
+		unlink_heredocs();
+		status = (unsigned char)ft_atoi(ht_get(map, "?"));
+		if (status == 2)
+			return (status);
+		line = get_prompt_line();
 	}
-	free(sym);
-	free(heredoc);
+	status = (unsigned char)ft_atoi(ht_get(map, "?"));
+	return (status);
 }
 
-int	prompt_loop(t_ht *map)
+int	process_tty_prompt(t_ht *map)
 {
 	char			*line;
-	unsigned char	status;
 
-	if (!isatty(fileno(stdin)))
-	{
-		ht_set(map, ft_strdup("#ISNOTATTY"), ft_strdup("TRUE"));
-		line = get_prompt_line();
-		while (line)
-		{
-			g_signal_int = 0;
-			if (!line)
-				return (0);
-			process_prompt(line, map);
-			unlink_heredocs();
-			status = (unsigned char)ft_atoi(ht_get(map, "?"));
-			if (status == 2)
-				return (status);
-			line = get_prompt_line();
-		}
-		status = (unsigned char)ft_atoi(ht_get(map, "?"));
-		return (status);
-	}
 	while (1)
 	{
 		line = readline("minishell $> ");
@@ -186,29 +170,30 @@ int	prompt_loop(t_ht *map)
 		process_prompt(line, map);
 		unlink_heredocs();
 	}
+	return (0);
+}
+
+int	prompt_loop(t_ht *map)
+{
+	if (!isatty(fileno(stdin)))
+		return (process_not_tty_prompt(map));
+	return (process_tty_prompt(map));
 }
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	t_ht		map;
-//	char		*termtype;
+	t_ht			map;
 	unsigned char	status;
+	char			*pwd;
 
 	status = 0;
 	if (argc > 1)
 		return (0);
-//	termtype = getenv("TERM");
-//	if (!termtype || tgetent(NULL, termtype) != 1)
-//	{
-//		ft_putendl_fd("Could not initialize termcap.", 2);
-//		return (1);
-//	}
-//	disable_echoctl();
 	setup_signals();
 	ht_init_from_env(&map, envp);
 	ht_set(&map, ft_strdup("?"), ft_strdup("0"));
 	ht_set(&map, ft_strdup("0"), ft_strdup(argv[0]));
-	char *pwd = ht_get(&map, "PWD");
+	pwd = ht_get(&map, "PWD");
 	if (!pwd)
 	{
 		pwd = getcwd(NULL, 0);

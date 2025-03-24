@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   cd.c                                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vapetros <vapetros@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/23 19:43:06 by vapetros          #+#    #+#             */
+/*   Updated: 2025/03/23 19:54:39 by vapetros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
 static int	check_for_dir(char *pwd)
@@ -27,7 +39,7 @@ static int	change_cd_path(char *pwd, char **args)
 		++i;
 	if (i > 1)
 	{
-		print_error("bash: ","cd: ", "too many arguments");
+		print_error("bash: ", "cd: ", "too many arguments");
 		return (1);
 	}
 	if (!*pwd)
@@ -40,6 +52,15 @@ static int	change_cd_path(char *pwd, char **args)
 		return (0);
 	perror("cd");
 	return (1);
+}
+
+int	change_path(t_ht *env, char *pwd, char *old_pwd, int cd_old_pwd)
+{
+	if (cd_old_pwd)
+		ft_putendl_fd(pwd, STDOUT_FILENO);
+	ht_set(env, ft_strdup("OLDPWD"), ft_strdup(old_pwd));
+	ht_set(env, ft_strdup("PWD"), getcwd(NULL, 0));
+	return (0);
 }
 
 int	ft_cd(char **args, t_ht *env)
@@ -68,9 +89,5 @@ int	ft_cd(char **args, t_ht *env)
 		pwd = *args;
 	if (change_cd_path(pwd, args))
 		return (1);
-	if (cd_old_pwd)
-		ft_putendl_fd(pwd, STDOUT_FILENO);
-	ht_set(env, ft_strdup("OLDPWD"), ft_strdup(old_pwd));
-	ht_set(env, ft_strdup("PWD"), getcwd(NULL, 0));
-	return (0);
+	return (change_path(env, pwd, old_pwd, cd_old_pwd));
 }
